@@ -1,0 +1,6 @@
+[submodule "Umbrella"]
+	path = Umbrella
+	url = https://github.com/PZ-Umbrella/Umbrella.git
+[submodule "StarlitLibrary"]
+	path = StarlitLibrary
+	url = https://github.com/demiurgeQuantified/StarlitLibrary.git

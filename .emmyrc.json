@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "workspace": {
+    "library": [
+      "./Contents/mods/PlumbingFixed/42/media/lua/shared",
+      "./Umbrella/library/",
+      "./StarlitLibrary/Contents/mods/StarlitLibrary/42.13/media/lua/shared"
+    ],
+    "ignoreDir": [
+      "./PlumbingFixed"
+    ]
+  }
+}
