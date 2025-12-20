@@ -3,6 +3,9 @@ title=PlumbingFixed [B42.13+]
 description=[h2]Fixes Plumbing for Fixtures[/h2]
 description=Fixes the default behavior of plumbed fixtures that will only pull from one water source until its depleted.
 description=
+description=[b]ONLY TESTED IN B42.13 SINGLEPLAYER[/b]
+description=TODO: I am working on checking functionality in MP and versions under 42 (ie. 41)
+description=
 description=[list]
 description=  [*]Will report all the available water above any plumbed fixture
 description=  [*]Will pull water in an intelligent way, always from the highest amount
@@ -15,4 +18,4 @@ description=[url=https://github.com/codyduong/PlumbingFixed][h3]GitHub Repositor
 description=
 description=[h3]Copyright 2025 Cody Duong[/h3]
 tags=Build 42;
-visibility=unlisted
+visibility=public

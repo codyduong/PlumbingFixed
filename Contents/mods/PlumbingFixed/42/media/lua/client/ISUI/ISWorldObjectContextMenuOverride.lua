@@ -1,4 +1,5 @@
 require "lua/client/ISUI/ISWorldObjectContextMenu"
+require "PlumbingFixed/utils"
 
 local function predicateCleaningLiquid(item)
 	if not item then return false end
@@ -96,7 +97,7 @@ ISWorldObjectContextMenu.doDrinkWaterMenu = function(object, player, context)
 	local tx = math.max(tx1, tx2)
 	local waterAmount = getPlumbedWaterAmount(object);
 	local waterMax = getPlumbedWaterCapacity(object);
-	tooltip.description = tooltip.description ..formatWaterAmount(object, tx, waterAmount, waterMax);
+	tooltip.description = tooltip.description..formatWaterAmount(object, tx, waterAmount, waterMax);
 		--	tooltip.description = tooltip.description .. string.format("%s: <SETX:%d> -%d / %d <LINE> %s",
 		--getText("Tooltip_food_Thirst"), tx, math.min(units * 10, thirst * 100), thirst * 100,
 		--formatWaterAmount(tx, waterAmount, waterMax))
@@ -556,3 +557,53 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
 
 	return mainSubMenu;
 end
+
+--- returns the waterObject (that needs adjusting) if there is one
+--- @param worldObjects IsoObject[]
+--- @return IsoObject?
+local function findWaterObject(worldObjects)
+	-- This first object always has a duplicate in the table, which is why the loop starts at 2.
+  for i = 2, #worldObjects do
+		local square = worldObjects[i]:getSquare();
+    local objects = square:getObjects()
+    -- java array requires 0 index
+    for j = 0, objects:size() - 1 do
+      local object = objects:get(j)
+      if object ~= nil and object:getUsesExternalWaterSource() then
+				local plumbed = getPlumbedSources(object);
+				if #plumbed > 0 then
+					return object
+				end
+			end
+    end
+  end
+end
+
+--- @type table<string, fun(object: IsoObject, player: integer, context: ISContextMenu): nil>
+local subMenuToRemove = {
+	[getText("ContextMenu_Drink")] = ISWorldObjectContextMenu.doDrinkWaterMenu,
+	[getText("ContextMenu_Fill")] = ISWorldObjectContextMenu.doFillFluidMenu,
+	[getText("ContextMenu_Wash")] = ISWorldObjectContextMenu.doWashClothingMenu,
+}
+
+Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, test)
+	local waterObject = findWaterObject(worldObjects);
+	local menu = context:getOptionFromName(getMoveableDisplayName(waterObject))
+	
+	if waterObject and menu then 
+		local subOption = menu.subOption
+		if subOption == nil then return end;
+		local subMenu = context:getSubMenu(subOption)
+		print("WHAT", subMenu);
+		if subMenu == nil then return end;
+		
+		-- replace the old ones
+		for name, fn in pairs(subMenuToRemove) do
+			if subMenu:getOptionFromName(name) then
+				subMenu:removeOptionByName(name);
+				fn(waterObject, player, subMenu);
+			end
+		end
+	end
+end)
+
