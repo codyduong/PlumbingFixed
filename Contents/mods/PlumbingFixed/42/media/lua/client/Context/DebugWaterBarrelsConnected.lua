@@ -52,16 +52,6 @@ Events.OnPreFillWorldObjectContextMenu.Add(function(player, context, worldObject
         totalDescription = totalDescription.."connectedWaterAmounts = "..tostring(waterTotal).."\n";
         option.toolTip.description = totalDescription; 
         context:addSubMenu(option, subMenu);
-
-        -- hack, we need to subtract the current water because we scanned it already
-        local addedWater = math.min(waterTotal - waterObject:getFluidAmount(), waterObject:getFluidCapacity());
-        local syncedTo = waterObject:FindExternalWaterSource();
-        local data = syncedTo:getModData();
-        data.PlumbingFixed = {
-          waterToRemove = addedWater,
-        };
-        syncedTo:setModData(data);
-        syncedTo:addFluid(FluidType.Water, addedWater);
         return
       end
     end
