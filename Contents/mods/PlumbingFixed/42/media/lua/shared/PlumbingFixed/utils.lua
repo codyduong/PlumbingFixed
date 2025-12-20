@@ -1,15 +1,3 @@
---- @param object IsoObject
-function resyncFluidAmounts(object)
-  local ingested = object:getModData();
-  if ingested ~= nil and ingested.PlumbingFixed ~= nil then
-    local moddata = ingested.PlumbingFixed;
-    local temp = object:moveFluidToTemporaryContainer(moddata.waterToRemove);
-    FluidContainer.DisposeContainer(temp);
-    ingested.PlumbingFixed = nil;
-    object:setModData(ingested);
-  end
-end
-
 --- @param waterObject IsoObject
 function getPlumbedSources(waterObject)
   local sources = {}
@@ -44,7 +32,6 @@ function getPlumbedSources(waterObject)
               and obj:hasWater())
           )
         then
-          resyncFluidAmounts(obj);
           table.insert(sources, obj);
         end
       end
