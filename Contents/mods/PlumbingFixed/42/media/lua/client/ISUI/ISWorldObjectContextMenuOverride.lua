@@ -594,7 +594,6 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
 		local subOption = menu.subOption
 		if subOption == nil then return end;
 		local subMenu = context:getSubMenu(subOption)
-		print("WHAT", subMenu);
 		if subMenu == nil then return end;
 		
 		-- replace the old ones

@@ -9,8 +9,11 @@ local original = {
   -- isValid = ISTakeWaterAction.isValid,
   updateUse = ISTakeWaterAction.updateUse,
   -- start = ISTakeWaterAction.start,
-  new = ISTakeWaterAction.new,
+  getDuration = ISTakeWaterAction.getDuration,
 }
+
+-- don't put in table, will fuck up metatable stuff
+local originalNew = ISTakeWaterAction.new
 
 ---@return boolean
 function ISTakeWaterAction:isValid()
@@ -34,7 +37,7 @@ end
 function ISTakeWaterAction:updateUse(targetDelta)
   --- @cast self ISTakeWaterActionOverride
   if self.externalWaterSources == nil or #self.externalWaterSources == 0 then
-    return original:updateUse(targetDelta)
+    return original.updateUse(self, targetDelta)
   end
 
   if self.waterUnit and self.waterUnit > 0 then
@@ -98,7 +101,7 @@ end
 ---@return ISTakeWaterAction
 function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL) 
   if not waterObject:getUsesExternalWaterSource() then
-    return original:new(character, item, waterObject, waterTaintedCL);
+    return originalNew(self, character, item, waterObject, waterTaintedCL);
   end
 
   ---@cast ISBaseTimedAction.new fun(character: IsoPlayer): ISTakeWaterActionOverride
