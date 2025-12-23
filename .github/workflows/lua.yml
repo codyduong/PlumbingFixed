@@ -3,13 +3,13 @@ name: Validate Lua
 on:
   push:
     paths:
-      - '.github/workflows/stylua.yml'
+      - '.github/workflows/lua.yml'
       - '**.lua'
     branches:
       - master
   pull_request:
     paths:
-      - '.github/workflows/stylua.yml'
+      - '.github/workflows/lua.yml'
       - '**.lua'
     branches:
       - master
@@ -33,7 +33,8 @@ jobs:
         run: cargo install emmylua_check
 
       - name: Validate Lua Files
-        run: emmylua_check .
+        working-directory: .
+        run: emmylua_check . -c .emmyrc.json
 
   stylua:
     runs-on: ubuntu-latest
