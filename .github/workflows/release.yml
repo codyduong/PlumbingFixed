@@ -35,8 +35,8 @@ jobs:
       # 3. Run the packaging script (Bash)
       - name: Package Mod
         run: |
-          chmod +x package.sh
-          ./package.sh ${{ inputs.tag_name }}
+          chmod +x scripts/package.sh
+          ./scripts/package.sh ${{ inputs.tag_name }}
 
       # 4. Zip the output folder
       - name: Zip Artifact
