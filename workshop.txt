@@ -16,6 +16,10 @@ description=
 description=[url=https://github.com/codyduong/PlumbingFixed/issues][h3]Post Issues Here[/h3][/url]
 description=[url=https://github.com/codyduong/PlumbingFixed][h3]GitHub Repository[/h3][/url]
 description=
+description=[b]Check out our other mods[/b]
+description=
+description=[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3629422471][img]https://raw.githubusercontent.com/cyrusduong/project-zomboid-drying-racks-fixed-b42-mp/3e09f46f1619a597d579cf6000fbe52e0482151b/Contents/mods/DryingRacksFixedB42MP/preview.png[/img][/url]
+description=
 description=[h3]Copyright 2025 Cody Duong[/h3]
 tags=Build 42;QoL;Interface;
 visibility=public
