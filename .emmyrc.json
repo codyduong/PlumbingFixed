@@ -9,5 +9,8 @@
     "ignoreDir": [
       "./PlumbingFixed"
     ]
+  },
+  "diagnostics": {
+    "globals": ["worldobjects"]
   }
 }

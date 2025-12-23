@@ -1,4 +1,4 @@
-name: Check Lua styling with StyLua
+name: Validate Lua
 
 on:
   push:

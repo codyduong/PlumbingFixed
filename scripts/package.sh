@@ -48,6 +48,7 @@ cp ./preview.png "./$MOD_NAME/preview.png"
 cp ./workshop.txt "./$MOD_NAME/workshop.txt"
 # build 41 compat
 cp -r "./Contents/mods/$MOD_NAME/41/"* "./$MOD_NAME/Contents/mods/$MOD_NAME/"
+cp -r "./Contents/mods/$MOD_NAME/42/media" "./$MOD_NAME/Contents/mods/$MOD_NAME/"
 rm -r "./$MOD_NAME/Contents/mods/$MOD_NAME/41"
 rm "./$MOD_NAME/Contents/mods/$MOD_NAME/common/.gitkeep"
 
