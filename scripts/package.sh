@@ -26,17 +26,28 @@ if [ -z "$FOUND_FILES" ]; then
 fi
 
 for file in $FOUND_FILES; do
-  # Extract version line, remove 'version=', and trim whitespace/newlines (handles Windows CRLF)
-  FILE_VERSION=$(grep "^version=" "$file" | cut -d'=' -f2 | tr -d '\r' | xargs)
-  
-  if [ "$FILE_VERSION" != "$EXPECTED_VERSION" ]; then
-    echo "❌ Version Mismatch in file: $file"
-    echo "   Expected: $EXPECTED_VERSION"
-    echo "   Found:  $FILE_VERSION"
-    exit 1
-  else 
-    echo "✅ Match: $file ($FILE_VERSION)"
-  fi
+    # FIX: Look for 'modversion=' instead of 'version='
+    # 1. grep: finds the line starting with modversion=
+    # 2. cut: splits by = and takes the second part
+    # 3. tr: deletes carriage returns (Windows compat)
+    # 4. xargs: trims leading/trailing whitespace
+    FILE_VERSION=$(grep "^modversion=" "$file" | cut -d'=' -f2 | tr -d '\r' | xargs)
+    
+    # Check if we actually found a version string
+    if [ -z "$FILE_VERSION" ]; then
+        echo "❌ Could not find 'modversion=' line in: $file"
+        echo "   (Make sure the file contains 'modversion=X.X.X')"
+        exit 1
+    fi
+
+    if [ "$FILE_VERSION" != "$EXPECTED_VERSION" ]; then
+        echo "❌ Version Mismatch in file: $file"
+        echo "   Expected: $EXPECTED_VERSION"
+        echo "   Found:    $FILE_VERSION"
+        exit 1
+    else 
+        echo "✅ Match: $file ($FILE_VERSION)"
+    fi
 done
 
 echo "All mod.info versions match. Proceeding to package..."
