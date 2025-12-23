@@ -15,11 +15,13 @@ on:
       - master
 
 jobs:
-  validate-lua:
+  emmylua:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Cache Cargo registry
         uses: actions/cache@v3
