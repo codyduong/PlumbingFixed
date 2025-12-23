@@ -16,36 +16,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Configure Git, Create Tag, and Push Tag
-      - name: Create and Push Tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Create the tag locally
-          git tag ${{ inputs.tag_name }}
-          
-          # Push the tag to remote
-          git push origin ${{ inputs.tag_name }}
-
-      # 3. Run the packaging script (Bash)
       - name: Package Mod
         run: |
           chmod +x scripts/package.sh
           ./scripts/package.sh ${{ inputs.tag_name }}
 
-      # 4. Zip the output folder
       - name: Zip Artifact
         run: |
           # Zip the folder created by package.sh
           # Format: zip -r [output_filename] [target_folder]
           zip -r PlumbingFixed.zip PlumbingFixed
 
-      # 5. Create GitHub Release
+      - name: Create and Push Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git tag ${{ inputs.tag_name }}
+          git push origin ${{ inputs.tag_name }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
