@@ -1,0 +1,49 @@
+name: Check Lua styling with StyLua
+
+on:
+  push:
+    paths:
+      - '.github/workflows/stylua.yml'
+      - '**.lua'
+    branches:
+      - master
+  pull_request:
+    paths:
+      - '.github/workflows/stylua.yml'
+      - '**.lua'
+    branches:
+      - master
+
+jobs:
+  validate-lua:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Install EmmyLua Check
+        run: cargo install emmylua_check
+
+      - name: Validate Lua Files
+        run: emmylua_check .
+
+  stylua:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Stylua
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: v2.3.1
+          args: --check --syntax Lua51 .

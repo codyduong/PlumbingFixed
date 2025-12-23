@@ -1,5 +1,7 @@
+modversion=1.0.0
 id=PlumbingFixed
 name=PlumbingFixed
+author=DuongC
 description=
 poster=poster.png
 tags=Build 42

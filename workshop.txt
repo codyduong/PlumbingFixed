@@ -17,5 +17,5 @@ description=[url=https://github.com/codyduong/PlumbingFixed/issues][h3]Post Issu
 description=[url=https://github.com/codyduong/PlumbingFixed][h3]GitHub Repository[/h3][/url]
 description=
 description=[h3]Copyright 2025 Cody Duong[/h3]
-tags=Build 42;
+tags=Build 42;QoL;Interface;
 visibility=public
