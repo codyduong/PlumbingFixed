@@ -1,4 +1,5 @@
---- @param waterObject IsoObject
+---@param waterObject IsoObject
+---@return IsoObject[]
 function getPlumbedSources(waterObject)
   local sources = {}
   if not waterObject:hasExternalWaterSource() then
@@ -35,7 +36,7 @@ function getPlumbedSources(waterObject)
             or (
               instanceof(obj, "IsoThumpable")
               and obj:getFluidCapacity() > 0.0
-              and (obj:hasWater() or obj:getFluidCapacity() == 0)
+              and (obj:hasWater() or obj:getFluidAmount() == 0)
             )
           )
         then
@@ -54,7 +55,11 @@ function getPlumbedWaterAmount(waterObject)
   local amount = 0.0
 
   for _, src in ipairs(sources) do
-    amount = amount + src:getFluidAmount()
+    local container = src:getFluidContainer()
+    local water = container:getSpecificFluidAmount(Fluid.Get(FluidType.Water))
+    local taintedWater = container:getSpecificFluidAmount(Fluid.Get(FluidType.TaintedWater))
+    local carbonatedWater = container:getSpecificFluidAmount(Fluid.Get(FluidType.CarbonatedWater))
+    amount = amount + water + taintedWater + carbonatedWater
   end
   if amount == 0.0 then
     amount = waterObject:getFluidAmount()
