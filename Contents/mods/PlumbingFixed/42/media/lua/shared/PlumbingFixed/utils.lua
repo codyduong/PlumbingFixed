@@ -32,7 +32,11 @@ function getPlumbedSources(waterObject)
           and (
             hasWaterFlag
             or hasWaterPipedFlag
-            or (instanceof(obj, "IsoThumpable") and obj:getFluidCapacity() > 0.0 and obj:hasWater())
+            or (
+              instanceof(obj, "IsoThumpable")
+              and obj:getFluidCapacity() > 0.0
+              and (obj:hasWater() or obj:getFluidCapacity() == 0)
+            )
           )
         then
           table.insert(sources, obj)

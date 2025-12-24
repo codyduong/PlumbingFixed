@@ -1,5 +1,10 @@
 require("PlumbingFixed/utils")
 
+---@param player IsoPlayer
+local function checkIfInRV(player)
+  return player:getX() > 22500 and player:getY() > 12000
+end
+
 --- @param object IsoObject
 --- @param context ISContextMenu
 local function showDebugMenu(object, context)
@@ -36,20 +41,29 @@ local function showDebugMenu(object, context)
         local x, y, z = src:getX(), src:getY(), src:getZ()
         local customName = src:getProperty("CustomName")
         local tileName = src:getTileName()
+        local name = src:getName()
 
         local description = ""
-        description = description .. "  Fluid = " .. fluidAmount .. "/" .. capacity .. "\n"
-        description = description .. "  Has Water = " .. (src:hasWater() and "true" or "false") .. "\n"
-        description = description .. "  Is Tainted = " .. (src:isTaintedWater() and "true" or "false") .. "\n"
-        description = description .. "  Coordinates = x:" .. x .. ", y:" .. y .. ", z:" .. z .. "\n"
-        description = customName and (description .. "  Custom Name = " .. customName .. "\n") or description
-        description = description .. "  Tile Name = " .. (tileName or "nil")
+        description = description .. "Fluid = " .. fluidAmount .. "/" .. capacity .. "\n"
+        description = description .. "Has Water = " .. tostring(src:hasWater()) .. "\n"
+        description = description .. "Is Tainted = " .. tostring(src:isTaintedWater()) .. "\n"
+        description = description .. "Coordinates = x:" .. x .. ", y:" .. y .. ", z:" .. z .. "\n"
+        description = description .. "Custom Name = " .. tostring(customName) .. "\n"
+        description = description .. "Name = " .. name .. "\n"
+        description = description .. "Tile Name = " .. tostring(tileName) .. "\n"
 
         subOption.toolTip.description = description
       end
       local totalDescription = ""
       totalDescription = totalDescription .. "connectedSources = " .. #plumbedObjects .. "\n"
       totalDescription = totalDescription .. "connectedWaterAmounts = " .. tostring(waterTotal) .. "\n"
+      -- Compat DEBUG w/ https://steamcommunity.com/workshop/filedetails/?id=3543229299
+      local rvMod = getActivatedMods():contains("\\PROJECTRVInterior42")
+      local inRV = checkIfInRV(getPlayer())
+      if rvMod then
+        totalDescription = totalDescription .. "\nProjectRVInterior42 Debug\n"
+        totalDescription = totalDescription .. "\tInside RV = " .. tostring(inRV) .. "\n"
+      end
       option.toolTip.description = totalDescription
       context:addSubMenu(option, subMenu)
       return true
