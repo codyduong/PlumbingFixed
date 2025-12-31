@@ -1,3 +1,5 @@
+-- Overrides ISWorldObjectContextMenu.lua
+
 require("lua/client/ISUI/ISWorldObjectContextMenu")
 require("PlumbingFixed/utils")
 
