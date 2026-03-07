@@ -3,9 +3,9 @@
 require("lua/shared/TimedActions/ISTakeWaterAction")
 require("PlumbingFixed/utils")
 
----@class ISTakeWaterActionOverride : ISTakeWaterAction
+---@class PFTakeWaterAction : ISTakeWaterAction
 ---@field externalWaterSources? IsoObject[]
-local ISTakeWaterActionOverride = ISTakeWaterAction
+local PFTakeWaterAction = ISTakeWaterAction
 
 local original = {
   -- isValid = ISTakeWaterAction.isValid,
@@ -23,13 +23,13 @@ function ISTakeWaterAction:isValid()
     return false
   end
 
-  --- @cast self ISTakeWaterActionOverride
+  --- @cast self PFTakeWaterAction
   if self.externalWaterSources == nil or #self.externalWaterSources == 0 then
     return self.waterObject:hasFluid()
   end
 
   for _, src in ipairs(self.externalWaterSources) do
-    if src:hasFluid() then
+    if src:hasWater() then
       return true
     end
   end
@@ -39,7 +39,7 @@ end
 
 ---@param targetDelta number
 function ISTakeWaterAction:updateUse(targetDelta)
-  --- @cast self ISTakeWaterActionOverride
+  --- @cast self PFTakeWaterAction
   if self.externalWaterSources == nil or #self.externalWaterSources == 0 then
     return original.updateUse(self, targetDelta)
   end
@@ -108,7 +108,7 @@ function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
     return originalNew(self, character, item, waterObject, waterTaintedCL)
   end
 
-  ---@cast ISBaseTimedAction.new fun(character: IsoPlayer): ISTakeWaterActionOverride
+  ---@cast ISBaseTimedAction.new fun(character: IsoPlayer): PFTakeWaterAction
   local o = ISBaseTimedAction.new(self, character)
   o.item = item
   o.waterObject = waterObject

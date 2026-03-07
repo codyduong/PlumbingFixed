@@ -1,7 +1,11 @@
 -- overwrites lua\client\ISUI\ISWorldObjectContextMenu.lua
 
 require("lua/client/ISUI/ISWorldObjectContextMenu")
+require("PlumbingFixed/TimedActions/PFCleanBandage")
+require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/utils")
+
+local tooltipModified = "Modified by Plumbing Fixed"
 
 local function predicateCleaningLiquid(item)
   if not item then
@@ -158,6 +162,7 @@ ISWorldObjectContextMenu.doDrinkWaterMenu = function(object, player, context)
   if object:isTaintedWater() and getSandboxOptions():getOptionByName("EnableTaintedWaterText"):getValue() then
     tooltip.description = tooltip.description .. " <BR> <RGB:1,0.5,0.5> " .. getText("Tooltip_item_TaintedWater")
   end
+  -- tooltip.description = tooltip.description .. "<BR>" .. tooltipModified
   option.toolTip = tooltip
   option.iconTexture = getTexture("Item_WaterDrop")
 end
@@ -250,6 +255,9 @@ ISWorldObjectContextMenu.doWashClothingMenu = function(sink, player, context)
     local mainOption = context:addOption(getText("ContextMenu_Wash"), nil, nil)
     local mainSubMenu = ISContextMenu:getNew(context)
     context:addSubMenu(mainOption, mainSubMenu)
+    -- local mainOptionTooltip = ISWorldObjectContextMenu.addToolTip()
+    -- mainOptionTooltip.description = tooltipModified
+    -- mainOption.toolTip = mainOptionTooltip
 
     local soapRemaining = 0
     if soapList and #soapList >= 1 then
@@ -448,189 +456,195 @@ ISWorldObjectContextMenu.doWashClothingMenu = function(sink, player, context)
   end
 end
 
-local CleanBandages = {}
+-- local CleanBandages = {}
 
-function CleanBandages.onCleanOne(playerObj, type, waterObject, recipe)
-  local playerInv = playerObj:getInventory()
-  local item = playerInv:getFirstTypeRecurse(type)
-  if not item then
-    return
-  end
-  ISInventoryPaneContextMenu.transferIfNeeded(playerObj, item)
-  if not luautils.walkAdj(playerObj, waterObject:getSquare(), true) then
-    return
-  end
-  ISTimedActionQueue.add(ISCleanBandage:new(playerObj, item, waterObject, recipe))
-end
+-- function CleanBandages.onCleanOne(playerObj, type, waterObject, recipe)
+--   local playerInv = playerObj:getInventory()
+--   local item = playerInv:getFirstTypeRecurse(type)
+--   if not item then
+--     return
+--   end
+--   ISInventoryPaneContextMenu.transferIfNeeded(playerObj, item)
+--   if not luautils.walkAdj(playerObj, waterObject:getSquare(), true) then
+--     return
+--   end
+--   ISTimedActionQueue.add(ISCleanBandage:new(playerObj, item, waterObject, recipe))
+-- end
 
-function CleanBandages.onCleanMultiple(playerObj, type, waterObject, recipe)
-  local playerInv = playerObj:getInventory()
-  local items = playerInv:getSomeTypeRecurse(type, getPlumbedWaterAmount(waterObject))
-  if items:isEmpty() then
-    return
-  end
-  ISInventoryPaneContextMenu.transferIfNeeded(playerObj, items)
-  if not luautils.walkAdj(playerObj, waterObject:getSquare(), true) then
-    return
-  end
-  for i = 1, items:size() do
-    local item = items:get(i - 1)
-    ISTimedActionQueue.add(ISCleanBandage:new(playerObj, item, waterObject, recipe))
-  end
-end
+-- function CleanBandages.onCleanMultiple(playerObj, type, waterObject, recipe)
+--   local playerInv = playerObj:getInventory()
+--   local items = playerInv:getSomeTypeRecurse(type, getPlumbedWaterAmount(waterObject))
+--   if items:isEmpty() then
+--     return
+--   end
+--   ISInventoryPaneContextMenu.transferIfNeeded(playerObj, items)
+--   if not luautils.walkAdj(playerObj, waterObject:getSquare(), true) then
+--     return
+--   end
+--   for i = 1, items:size() do
+--     local item = items:get(i - 1)
+--     ISTimedActionQueue.add(ISCleanBandage:new(playerObj, item, waterObject, recipe))
+--   end
+-- end
 
-function CleanBandages.onCleanAll(playerObj, waterObject, itemData)
-  local waterRemaining = getPlumbedWaterAmount(waterObject)
-  if waterRemaining < 1 then
-    return
-  end
-  local playerInv = playerObj:getInventory()
-  local items = ArrayList.new()
-  local itemToRecipe = {}
-  for _, data in ipairs(itemData) do
-    local first = items:size()
-    playerInv:getSomeTypeRecurse(data.itemType, waterRemaining - items:size(), items)
-    for i = first, items:size() - 1 do
-      itemToRecipe[items:get(i)] = data.recipe
-    end
-    if waterRemaining <= items:size() then
-      break
-    end
-  end
-  if items:isEmpty() then
-    return
-  end
-  ISInventoryPaneContextMenu.transferIfNeeded(playerObj, items)
-  if not luautils.walkAdj(playerObj, waterObject:getSquare(), true) then
-    return
-  end
-  for i = 1, items:size() do
-    local item = items:get(i - 1)
-    local recipe = itemToRecipe[item]
-    ISTimedActionQueue.add(ISCleanBandage:new(playerObj, item, waterObject, recipe))
-  end
-end
+-- function CleanBandages.onCleanAll(playerObj, waterObject, itemData)
+--   local waterRemaining = getPlumbedWaterAmount(waterObject)
+--   if waterRemaining < 1 then
+--     return
+--   end
+--   local playerInv = playerObj:getInventory()
+--   local items = ArrayList.new()
+--   local itemToRecipe = {}
+--   for _, data in ipairs(itemData) do
+--     local first = items:size()
+--     playerInv:getSomeTypeRecurse(data.itemType, waterRemaining - items:size(), items)
+--     for i = first, items:size() - 1 do
+--       itemToRecipe[items:get(i)] = data.recipe
+--     end
+--     if waterRemaining <= items:size() then
+--       break
+--     end
+--   end
+--   if items:isEmpty() then
+--     return
+--   end
+--   ISInventoryPaneContextMenu.transferIfNeeded(playerObj, items)
+--   if not luautils.walkAdj(playerObj, waterObject:getSquare(), true) then
+--     return
+--   end
+--   for i = 1, items:size() do
+--     local item = items:get(i - 1)
+--     local recipe = itemToRecipe[item]
+--     ISTimedActionQueue.add(ISCleanBandage:new(playerObj, item, waterObject, recipe))
+--   end
+-- end
 
-function CleanBandages.getAvailableItems(items, playerObj, recipeName, itemType)
-  local recipe = getScriptManager():getRecipe(recipeName)
-  if not recipe then
-    return nil
-  end
-  local playerInv = playerObj:getInventory()
-  local count = playerInv:getCountTypeRecurse(itemType)
-  if count == 0 then
-    return
-  end
-  table.insert(items, { itemType = itemType, count = count, recipe = recipe })
-end
+-- function CleanBandages.getAvailableItems(items, playerObj, recipeName, itemType)
+--   local recipe = getScriptManager():getRecipe(recipeName)
+--   if not recipe then
+--     return nil
+--   end
+--   local playerInv = playerObj:getInventory()
+--   local count = playerInv:getCountTypeRecurse(itemType)
+--   if count == 0 then
+--     return
+--   end
+--   table.insert(items, { itemType = itemType, count = count, recipe = recipe })
+-- end
 
-function CleanBandages.setSubmenu(subMenu, item, waterObject)
-  local itemType = item.itemType
-  local count = item.count
-  local recipe = item.recipe
-  local waterRemaining = getPlumbedWaterAmount(waterObject)
+-- function CleanBandages.setSubmenu(subMenu, item, waterObject)
+--   local itemType = item.itemType
+--   local count = item.count
+--   local recipe = item.recipe
+--   local waterRemaining = getPlumbedWaterAmount(waterObject)
 
-  local tooltip = nil
-  local notAvailable = false
-  if waterObject:isTaintedWater() and getSandboxOptions():getOptionByName("EnableTaintedWaterText"):getValue() then
-    tooltip = ISWorldObjectContextMenu.addToolTip()
-    tooltip.description = " <RGB:1,0.5,0.5> " .. getText("Tooltip_item_TaintedWater")
-    tooltip.maxLineWidth = 512
-    notAvailable = true
-  else
-    tooltip = ISRecipeTooltip.addToolTip()
-    tooltip.character = getSpecificPlayer(subMenu.player)
-    tooltip.recipe = recipe
-    tooltip:setName(recipe:getName())
-    local resultItem = getScriptManager():FindItem(recipe:getResult():getFullType())
-    if resultItem and resultItem:getNormalTexture() and resultItem:getNormalTexture():getName() ~= "Question_On" then
-      tooltip:setTexture(resultItem:getNormalTexture():getName())
-    end
-  end
+--   --- @type nil | ISToolTip | ISRecipeTooltip
+--   local tooltip = nil
+--   local notAvailable = false
+--   if waterObject:isTaintedWater() and getSandboxOptions():getOptionByName("EnableTaintedWaterText"):getValue() then
+--     tooltip = ISWorldObjectContextMenu.addToolTip()
+--     tooltip.description = " <RGB:1,0.5,0.5> " .. getText("Tooltip_item_TaintedWater")
+--     tooltip.maxLineWidth = 512
+--     notAvailable = true
+--   else
+--     tooltip = ISRecipeTooltip.addToolTip()
+--     tooltip.character = getSpecificPlayer(subMenu.player)
+--     tooltip.recipe = recipe
+--     tooltip:setName(recipe:getName())
+--     local resultItem = getScriptManager():FindItem(recipe:getResult():getFullType())
+--     if resultItem and resultItem:getNormalTexture() and resultItem:getNormalTexture():getName() ~= "Question_On" then
+--       tooltip:setTexture(resultItem:getNormalTexture():getName())
+--     end
+--   end
+--   --- @cast tooltip ISToolTip
+--   tooltip.description = tooltip.description .. "<BR>" .. tooltipModified
 
-  if count > 1 then
-    local subOption = subMenu:addOption(recipe:getName())
-    local subMenu2 = ISContextMenu:getNew(subMenu)
-    subMenu:addSubMenu(subOption, subMenu2)
+--   if count > 1 then
+--     local subOption = subMenu:addOption(recipe:getName())
+--     local subMenu2 = ISContextMenu:getNew(subMenu)
+--     subMenu:addSubMenu(subOption, subMenu2)
 
-    local option1 =
-      subMenu2:addActionsOption(getText("ContextMenu_One"), CleanBandages.onCleanOne, itemType, waterObject, recipe)
-    option1.toolTip = tooltip
-    option1.notAvailable = notAvailable
+--     local option1 =
+--       subMenu2:addActionsOption(getText("ContextMenu_One"), CleanBandages.onCleanOne, itemType, waterObject, recipe)
+--     option1.toolTip = tooltip
+--     option1.notAvailable = notAvailable
 
-    local option2 = subMenu2:addActionsOption(
-      getText("ContextMenu_AllWithCount", math.min(count, waterRemaining)),
-      CleanBandages.onCleanMultiple,
-      itemType,
-      waterObject,
-      recipe
-    )
-    option2.toolTip = tooltip
-    option2.notAvailable = notAvailable
-  else
-    local option = subMenu:addActionsOption(recipe:getName(), CleanBandages.onCleanOne, itemType, waterObject, recipe)
-    option.toolTip = tooltip
-    option.notAvailable = notAvailable
-  end
-end
+--     local option2 = subMenu2:addActionsOption(
+--       getText("ContextMenu_AllWithCount", math.min(count, waterRemaining)),
+--       CleanBandages.onCleanMultiple,
+--       itemType,
+--       waterObject,
+--       recipe
+--     )
+--     option2.toolTip = tooltip
+--     option2.notAvailable = notAvailable
+--   else
+--     local option = subMenu:addActionsOption(recipe:getName(), CleanBandages.onCleanOne, itemType, waterObject, recipe)
+--     option.toolTip = tooltip
+--     option.notAvailable = notAvailable
+--   end
+-- end
 
-ISWorldObjectContextMenu.doRecipeUsingWaterMenu = function(waterObject, playerNum, context)
-  local playerObj = getSpecificPlayer(playerNum)
-  local playerInv = playerObj:getInventory()
+-- ISWorldObjectContextMenu.doRecipeUsingWaterMenu = function(waterObject, playerNum, context)
+--   local playerObj = getSpecificPlayer(playerNum)
+--   local playerInv = playerObj:getInventory()
 
-  local waterRemaining = getPlumbedWaterAmount(waterObject)
-  if waterRemaining < 1 then
-    return
-  end
+--   local waterRemaining = getPlumbedWaterAmount(waterObject)
+--   if waterRemaining < 1 then
+--     return
+--   end
 
-  -- It would perhaps be better to allow *any* recipes that require water to take water from a clicked-on
-  -- water-containing object.  This would be similar to how RecipeManager.isNearItem() works.
-  -- We would need to pass the water-containing object to RecipeManager, or pick one in isNearItem().
+--   -- It would perhaps be better to allow *any* recipes that require water to take water from a clicked-on
+--   -- water-containing object.  This would be similar to how RecipeManager.isNearItem() works.
+--   -- We would need to pass the water-containing object to RecipeManager, or pick one in isNearItem().
 
-  local items = {}
-  CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Bandage", "Base.BandageDirty")
-  CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Denim Strips", "Base.DenimStripsDirty")
-  CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Leather Strips", "Base.LeatherStripsDirty")
-  CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Rag", "Base.RippedSheetsDirty")
+--   local items = {}
+--   CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Bandage", "Base.BandageDirty")
+--   CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Denim Strips", "Base.DenimStripsDirty")
+--   CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Leather Strips", "Base.LeatherStripsDirty")
+--   CleanBandages.getAvailableItems(items, playerObj, "Base.Clean Rag", "Base.RippedSheetsDirty")
 
-  if #items == 0 then
-    return
-  end
+--   if #items == 0 then
+--     return
+--   end
 
-  ISRecipeTooltip.releaseAll()
+--   ISRecipeTooltip.releaseAll()
 
-  -- If there's a single item type, don't display the extra submenu.
-  if #items == 1 then
-    CleanBandages.setSubmenu(context, items[1], waterObject)
-    return
-  end
+--   -- If there's a single item type, don't display the extra submenu.
+--   if #items == 1 then
+--     CleanBandages.setSubmenu(context, items[1], waterObject)
+--     return
+--   end
 
-  local subMenu = ISContextMenu:getNew(context)
-  local subOption = context:addOption(getText("ContextMenu_CleanBandageEtc"))
-  context:addSubMenu(subOption, subMenu)
+--   local subMenu = ISContextMenu:getNew(context)
+--   local subOption = context:addOption(getText("ContextMenu_CleanBandageEtc"))
+--   context:addSubMenu(subOption, subMenu)
+--   local subMenuTooltip = ISWorldObjectContextMenu.addToolTip()
+--   subMenuTooltip.description = tooltipModified .. "<BR>" .. "WTF i hate you"
+--   subMenu.toolTip = subMenuTooltip
 
-  local numItems = 0
-  for _, item in ipairs(items) do
-    numItems = numItems + item.count
-  end
-  local option = subMenu:addActionsOption(
-    getText("ContextMenu_AllWithCount", math.min(numItems, waterRemaining)),
-    CleanBandages.onCleanAll,
-    waterObject,
-    items
-  )
-  if waterObject:isTaintedWater() and getSandboxOptions():getOptionByName("EnableTaintedWaterText"):getValue() then
-    tooltip = ISWorldObjectContextMenu.addToolTip()
-    tooltip.description = " <RGB:1,0.5,0.5> " .. getText("Tooltip_item_TaintedWater")
-    tooltip.maxLineWidth = 512
-    option.toolTip = tooltip
-    option.notAvailable = true
-  end
+--   local numItems = 0
+--   for _, item in ipairs(items) do
+--     numItems = numItems + item.count
+--   end
+--   local option = subMenu:addActionsOption(
+--     getText("ContextMenu_AllWithCount", math.min(numItems, waterRemaining)),
+--     CleanBandages.onCleanAll,
+--     waterObject,
+--     items
+--   )
+--   if waterObject:isTaintedWater() and getSandboxOptions():getOptionByName("EnableTaintedWaterText"):getValue() then
+--     local tooltip = ISWorldObjectContextMenu.addToolTip()
+--     tooltip.description = " <RGB:1,0.5,0.5> " .. getText("Tooltip_item_TaintedWater")
+--     tooltip.maxLineWidth = 512
+--     option.toolTip = tooltip
+--     option.notAvailable = true
+--   end
 
-  for _, item in ipairs(items) do
-    CleanBandages.setSubmenu(subMenu, item, waterObject)
-  end
-end
+--   for _, item in ipairs(items) do
+--     CleanBandages.setSubmenu(subMenu, item, waterObject)
+--   end
+-- end
 
 ISWorldObjectContextMenu.onDrink = function(worldobjects, waterObject, player)
   local playerObj = getSpecificPlayer(player)
@@ -708,12 +722,29 @@ ISWorldObjectContextMenu.onTakeWater = function(worldobjects, waterObject, water
   end
 end
 
+--- @param context ISContextMenu
+--- @param object IsoObject
+--- @param player integer
+--- @return ISContextMenu
 function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   local containerName = getMoveableDisplayName(object) or object:getFluidUiName()
-  local option = context:addOption(containerName, nil, nil)
+  local oldOption = context:getOptionFromName(containerName)
+  local option = oldOption or context:addOption(containerName, nil, nil)
+  if oldOption then
+    local subOption = oldOption.subOption
+    if subOption then
+      local subMenu = context:getSubMenu(subOption)
+      if subMenu then
+        subMenu:removeFromUIManager()
+      end
+    end
+  end
 
   local mainSubMenu = ISContextMenu:getNew(context)
   context:addSubMenu(option, mainSubMenu)
+  -- local mainSubMenuTooltip = ISWorldObjectContextMenu.addToolTip()
+  -- mainSubMenuTooltip.description = tooltipModified
+  -- mainSubMenu.toolTip = mainSubMenuTooltip
 
   local isTrough = false
   -- so i can add my specifics thing for feeding trough (as it can have food too) in this context option.
@@ -747,12 +778,17 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   end
 
   if object:hasFluid() and getPlumbedWaterCapacity(object) < 9999 then -- capacity >= 9999 means infinite water.
-    mainSubMenu:addOption(
+    local empty = mainSubMenu:addOption(
       getText("Fluid_Empty"),
       player,
       ISWorldObjectContextMenu.onFluidEmpty,
       object:getFluidContainer()
     )
+    if object:hasExternalWaterSource() then
+      local emptyToolTip = ISWorldObjectContextMenu.addToolTip()
+      emptyToolTip.description = "<RGB:1,0.5,0.5>" .. getText("ContextMenu_WillEmptyWarning")
+      empty.toolTip = emptyToolTip
+    end
   end
 
   return mainSubMenu
@@ -779,33 +815,42 @@ local function findWaterObject(worldObjects)
   end
 end
 
---- @type table<string, fun(object: IsoObject, player: integer, context: ISContextMenu): nil>
-local subMenuToRemove = {
-  [getText("ContextMenu_Drink")] = ISWorldObjectContextMenu.doDrinkWaterMenu,
-  [getText("ContextMenu_Fill")] = ISWorldObjectContextMenu.doFillFluidMenu,
-  [getText("ContextMenu_Wash")] = ISWorldObjectContextMenu.doWashClothingMenu,
-}
+-- --- @type table<string, fun(object: IsoObject, player: integer, context: ISContextMenu): nil>
+-- local subMenuToRemove = {
+--   [getText("ContextMenu_Drink")] = ISWorldObjectContextMenu.doDrinkWaterMenu,
+--   [getText("ContextMenu_Fill")] = ISWorldObjectContextMenu.doFillFluidMenu,
+--   [getText("ContextMenu_Wash")] = ISWorldObjectContextMenu.doWashClothingMenu,
+--   [getText("ContextMenu_CleanBandageEtc")] = ISWorldObjectContextMenu.doRecipeUsingWaterMenu,
+-- }
 
 Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, test)
   local waterObject = findWaterObject(worldObjects)
-  local menu = context:getOptionFromName(getMoveableDisplayName(waterObject))
-
-  if waterObject and menu then
-    local subOption = menu.subOption
-    if subOption == nil then
-      return
-    end
-    local subMenu = context:getSubMenu(subOption)
-    if subMenu == nil then
-      return
-    end
-
-    -- replace the old ones
-    for name, fn in pairs(subMenuToRemove) do
-      if subMenu:getOptionFromName(name) then
-        subMenu:removeOptionByName(name)
-        fn(waterObject, player, subMenu)
-      end
-    end
+  if waterObject == nil then
+    return
   end
+  if not waterObject:hasExternalWaterSource() then
+    return
+  end
+
+  -- local menu = context:getOptionFromName(getMoveableDisplayName(waterObject) or waterObject:getFluidUiName())
+  -- if menu then
+  --   local subOption = menu.subOption
+  --   if subOption == nil then
+  --     return
+  --   end
+  --   local subMenu = context:getSubMenu(subOption)
+  --   if subMenu == nil then
+  --     return
+  --   end
+
+  --   -- replace the old ones
+  --   for name, fn in pairs(subMenuToRemove) do
+  --     if subMenu:getOptionFromName(name) then
+  --       subMenu:removeOptionByName(name)
+  --       fn(waterObject, player, subMenu)
+  --     end
+  --   end
+  -- end
+
+  ISWorldObjectContextMenu.doFluidContainerMenu(context, waterObject, player)
 end)

@@ -1,0 +1,4 @@
+ContextMenu_RU = {
+  ContextMenu_DebugConnectedSources = "Налагодження водопроводу",
+  ContextMenu_WillEmptyWarning = "Це також спустошить ваші підключені бочки",
+}
