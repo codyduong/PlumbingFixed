@@ -6,7 +6,7 @@ on:
       tag_name:
         description: 'Version Tag (e.g., v1.0.1)'
         required: true
-        type: string    
+        type: string
 
 permissions:
   contents: write # Required to push tags and create releases
