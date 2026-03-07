@@ -1,3 +1,0 @@
-ContextMenu_JP = {
-  ContextMenu_DebugConnectedSources = "接続の配管デバッグ",
-}
