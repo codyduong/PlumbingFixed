@@ -83,25 +83,3 @@ function getPlumbedWaterCapacity(waterObject)
 
   return capacity
 end
-
---- @param waterObject IsoObject
---- @return boolean
-function getPlumbedHasWater(waterObject)
-  local sources = getPlumbedSources(waterObject)
-
-  if waterObject:getFluidAmount() > 0 then
-    return true
-  end
-
-  for _, src in ipairs(sources) do
-    local container = src:getFluidContainer()
-    local water = container:getSpecificFluidAmount(Fluid.Get(FluidType.Water))
-    local taintedWater = container:getSpecificFluidAmount(Fluid.Get(FluidType.TaintedWater))
-    local carbonatedWater = container:getSpecificFluidAmount(Fluid.Get(FluidType.CarbonatedWater))
-    if water > 0 or taintedWater > 0 or carbonatedWater > 0 then
-      return true
-    end
-  end
-
-  return false
-end
