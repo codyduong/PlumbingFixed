@@ -116,53 +116,55 @@ function removeWaterTopDown(waterObject, amount)
   --- @type table<number, { obj: IsoObject, amt: number }>
   local list = {}
   for _, src in ipairs(srcs) do
-      table.insert(list, { obj = src, amt = src:getFluidAmount() })
+    table.insert(list, { obj = src, amt = src:getFluidAmount() })
   end
 
   local remaining = amount
   while remaining > 0.0001 do -- Threshold for float precision
-      -- 2. Sort descending
-      table.sort(list, function(a, b) return a.amt > b.amt end)
-      
-      -- 3. Find how many share the top value
-      local count = 0
-      local topAmt = list[1].amt
-      for i = 1, #list do
-          if list[i].amt >= topAmt - 0.0001 then -- Float safe comparison
-              count = i
-          else
-              break
-          end
-      end
-      
-      -- 4. Determine how much we can drop these 'count' containers
-      local nextAmt = (count < #list) and list[count + 1].amt or 0
-      local diff = topAmt - nextAmt
-      local totalAvailableInLayer = diff * count
-      
-      local extractionStep = 0
-      if totalAvailableInLayer > remaining then
-          -- We only need a fraction of this gap
-          extractionStep = remaining / count
-          remaining = 0
+    -- 2. Sort descending
+    table.sort(list, function(a, b)
+      return a.amt > b.amt
+    end)
+
+    -- 3. Find how many share the top value
+    local count = 0
+    local topAmt = list[1].amt
+    for i = 1, #list do
+      if list[i].amt >= topAmt - 0.0001 then -- Float safe comparison
+        count = i
       else
-          -- We drain this entire layer to match the next level
-          extractionStep = diff
-          remaining = remaining - totalAvailableInLayer
+        break
       end
-      
-      -- 5. Apply the extraction to our tracking list
-      for i = 1, count do
-          list[i].amt = list[i].amt - extractionStep
-      end
+    end
+
+    -- 4. Determine how much we can drop these 'count' containers
+    local nextAmt = (count < #list) and list[count + 1].amt or 0
+    local diff = topAmt - nextAmt
+    local totalAvailableInLayer = diff * count
+
+    local extractionStep = 0
+    if totalAvailableInLayer > remaining then
+      -- We only need a fraction of this gap
+      extractionStep = remaining / count
+      remaining = 0
+    else
+      -- We drain this entire layer to match the next level
+      extractionStep = diff
+      remaining = remaining - totalAvailableInLayer
+    end
+
+    -- 5. Apply the extraction to our tracking list
+    for i = 1, count do
+      list[i].amt = list[i].amt - extractionStep
+    end
   end
 
   for _, item in ipairs(list) do
-        local original = item.obj:getFluidAmount()
-        local toRemove = original - item.amt
-        if toRemove > 0 then
-            local container = item.obj:moveFluidToTemporaryContainer(toRemove)
-            FluidContainer.DisposeContainer(container)
-        end
+    local original = item.obj:getFluidAmount()
+    local toRemove = original - item.amt
+    if toRemove > 0 then
+      local container = item.obj:moveFluidToTemporaryContainer(toRemove)
+      FluidContainer.DisposeContainer(container)
     end
+  end
 end

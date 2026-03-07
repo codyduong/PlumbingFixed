@@ -184,16 +184,16 @@ debugScenarios.DebugPlumbing = {
     shirt:addRandomBlood()
     chr:setWornItem(shirt:getBodyLocation(), shirt)
 
-    local clothe = inv:AddItem("Base.Trousers_Denim");
-		clothe:getVisual():setTextureChoice(2);
+    local clothe = inv:AddItem("Base.Trousers_Denim")
+    clothe:getVisual():setTextureChoice(2)
     ---@cast clothe Clothing
-    clothe:addRandomBlood();
-    clothe:addRandomBlood();
+    clothe:addRandomBlood()
+    clothe:addRandomBlood()
     chr:setWornItem(clothe:getBodyLocation(), clothe)
 
-    chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false);
-		chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false);
-		chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false);
+    chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
+    chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
+    chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
 
     threeByThree(8349, 7184, 0, true)
     threeByThree(8349, 7184, 1, false)
@@ -215,7 +215,16 @@ debugScenarios.DebugPlumbing = {
     end
 
     -- local stair = fuckYouSq(8349, 7189, 0)
-    local stairs = ISWoodenStairs:new("carpentry_02_88", "carpentry_02_89", "carpentry_02_90", "carpentry_02_96", "carpentry_02_97", "carpentry_02_98", "carpentry_02_94", "carpentry_02_95");
+    local stairs = ISWoodenStairs:new(
+      "carpentry_02_88",
+      "carpentry_02_89",
+      "carpentry_02_90",
+      "carpentry_02_96",
+      "carpentry_02_97",
+      "carpentry_02_98",
+      "carpentry_02_94",
+      "carpentry_02_95"
+    )
     -- local sprite = "carpentry_02_88";
     -- if north then
     --   sprite = "carpentry_02_96";
