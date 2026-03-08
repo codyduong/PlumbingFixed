@@ -753,21 +753,29 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     isTrough = true
   end
 
-  if not isTrough and not isPlumbed then
-    mainSubMenu:addOption(
+  local disabledToolTip = ISWorldObjectContextMenu.addToolTip()
+  disabledToolTip.description = "Disabled by Plumbing Fixed for the time being <BR> (will be fixed in future)"
+  if not isTrough then
+    local option = mainSubMenu:addOption(
       getText("Fluid_Show_Info"),
       player,
       ISWorldObjectContextMenu.onFluidInfo,
       object:getFluidContainer()
     )
+    if isPlumbed then
+      option.isDisabled = true
+      option.toolTip = disabledToolTip
+    end
   end
-  if not isPlumbed then
-    mainSubMenu:addOption(
-      getText("Fluid_Transfer_Fluids"),
-      player,
-      ISWorldObjectContextMenu.onFluidTransfer,
-      object:getFluidContainer()
-    )
+  local option = mainSubMenu:addOption(
+    getText("Fluid_Transfer_Fluids"),
+    player,
+    ISWorldObjectContextMenu.onFluidTransfer,
+    object:getFluidContainer()
+  )
+  if isPlumbed then
+    option.isDisabled = true
+    option.toolTip = disabledToolTip
   end
 
   if object:hasFluid() or getPlumbedHasWater(object) then
@@ -778,16 +786,20 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     ISWorldObjectContextMenu.doWashClothingMenu(object, player, mainSubMenu)
   end
 
-  if object:hasFluid() and getPlumbedWaterCapacity(object) < 9999 and not isPlumbed then -- capacity >= 9999 means infinite water.
+  if object:hasFluid() and getPlumbedWaterCapacity(object) < 9999 then -- capacity >= 9999 means infinite water.
     local empty = mainSubMenu:addOption(
       getText("Fluid_Empty"),
       player,
       ISWorldObjectContextMenu.onFluidEmpty,
       object:getFluidContainer()
     )
-    if object:hasExternalWaterSource() then
+    if isPlumbed then
+      empty.isDisabled = true
       local emptyToolTip = ISWorldObjectContextMenu.addToolTip()
-      emptyToolTip.description = "<RGB:1,0.5,0.5>" .. getText("ContextMenu_WillEmptyWarning")
+      emptyToolTip.description = "Disabled by Plumbing Fixed for the time being <BR> (will be fixed in future) <BR> "
+      emptyToolTip.description = emptyToolTip.description
+        .. "<RGB:1,0.5,0.5>"
+        .. getText("ContextMenu_WillEmptyWarning")
       empty.toolTip = emptyToolTip
     end
   end
