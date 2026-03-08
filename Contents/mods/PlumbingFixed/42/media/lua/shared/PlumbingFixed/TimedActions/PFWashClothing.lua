@@ -21,7 +21,7 @@ end
 
 function ISWashClothing:complete()
   if not self.sink:hasExternalWaterSource() then
-    original.complete(self)
+    return original.complete(self)
   end
 
   local item = self.item
