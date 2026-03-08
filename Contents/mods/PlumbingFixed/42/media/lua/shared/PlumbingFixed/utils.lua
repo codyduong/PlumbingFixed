@@ -55,11 +55,12 @@ function getPlumbedWaterAmount(waterObject)
   local amount = 0.0
 
   for _, src in ipairs(sources) do
-    local container = src:getFluidContainer()
-    local water = container:getSpecificFluidAmount(Fluid.Water)
-    local taintedWater = container:getSpecificFluidAmount(Fluid.TaintedWater)
-    local carbonatedWater = container:getSpecificFluidAmount(Fluid.CarbonatedWater)
-    amount = amount + water + taintedWater + carbonatedWater
+    -- local container = src:getFluidContainer()
+    -- local water = container:getSpecificFluidAmount(Fluid.Water)
+    -- local taintedWater = container:getSpecificFluidAmount(Fluid.TaintedWater)
+    -- local carbonatedWater = container:getSpecificFluidAmount(Fluid.CarbonatedWater)
+    -- amount = amount + water + taintedWater + carbonatedWater
+    amount = amount + src:getFluidAmount() -- temp revert
   end
   if amount == 0.0 then
     amount = waterObject:getFluidAmount()

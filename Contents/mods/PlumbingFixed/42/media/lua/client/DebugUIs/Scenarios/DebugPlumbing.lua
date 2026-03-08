@@ -230,5 +230,14 @@ debugScenarios.DebugPlumbing = {
     --   sprite = "carpentry_02_96";
     -- end
     stairs:create(8349, 7189, 0, true, "carpentry_02_96")
+
+    -- unplumbed
+    threeByThree(8354, 7184, 0, true)
+    threeByThree(8354, 7184, 1, false)
+    createBarrelOnSq(8354, 7184, 1, "carpentry_02_122")
+    centerSq = getCell():getGridSquare(8355, 7185, 0)
+    centerSq:addTileObject("fixtures_sinks_01_32")
+    sink = centerSq:getObjectWithSprite("fixtures_sinks_01_32")
+    stairs:create(8354, 7189, 0, true, "carpentry_02_96")
   end,
 }

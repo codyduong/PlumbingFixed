@@ -29,7 +29,8 @@ function ISTakeWaterAction:isValid()
   end
 
   for _, src in ipairs(self.externalWaterSources) do
-    if src:hasWater() then
+    -- if src:hasWater() then
+    if src:hasFluid() then -- revert? maybe this is causing issues
       return true
     end
   end

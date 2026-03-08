@@ -1,8 +1,6 @@
 -- overwrites lua\client\ISUI\ISWorldObjectContextMenu.lua
 
 require("lua/client/ISUI/ISWorldObjectContextMenu")
-require("PlumbingFixed/TimedActions/PFCleanBandage")
-require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/utils")
 
 local tooltipModified = "Modified by Plumbing Fixed"
@@ -16,9 +14,9 @@ local function predicateCleaningLiquid(item)
     and (item:getFluidContainer():getAmount() >= ZomboidGlobals.CleanBloodBleachAmount)
 end
 
-local function predicateNotBroken(item)
-  return not item:isBroken()
-end
+-- local function predicateNotBroken(item)
+--   return not item:isBroken()
+-- end
 
 local function getMoveableDisplayName(obj)
   if not obj then
@@ -113,13 +111,13 @@ function ISWorldObjectContextMenu.toggleComboWasherDryer(context, playerObj, obj
   )
 end
 
-ISWorldObjectContextMenu.onPlumbItem = function(worldobjects, player, itemToPipe)
-  local playerObj = getSpecificPlayer(player)
-  local wrench = playerObj:getInventory():getFirstTypeEvalRecurse("PipeWrench", predicateNotBroken)
-    or playerObj:getInventory():getFirstTagEvalRecurse(ItemTag.PIPE_WRENCH, predicateNotBroken)
-  ISWorldObjectContextMenu.equip(playerObj, playerObj:getPrimaryHandItem(), wrench, true)
-  ISTimedActionQueue.add(ISPlumbItem:new(playerObj, itemToPipe, wrench))
-end
+-- ISWorldObjectContextMenu.onPlumbItem = function(worldobjects, player, itemToPipe)
+--   local playerObj = getSpecificPlayer(player)
+--   local wrench = playerObj:getInventory():getFirstTypeEvalRecurse("PipeWrench", predicateNotBroken)
+--     or playerObj:getInventory():getFirstTagEvalRecurse(ItemTag.PIPE_WRENCH, predicateNotBroken)
+--   ISWorldObjectContextMenu.equip(playerObj, playerObj:getPrimaryHandItem(), wrench, true)
+--   ISTimedActionQueue.add(ISPlumbItem:new(playerObj, itemToPipe, wrench))
+-- end
 
 local function formatWaterAmount(object, setX, amount, max)
   -- Water tiles have waterAmount=9999
@@ -747,6 +745,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   -- mainSubMenu.toolTip = mainSubMenuTooltip
 
   local isTrough = false
+  local isPlumbed = object:hasExternalWaterSource()
   -- so i can add my specifics thing for feeding trough (as it can have food too) in this context option.
   if instanceof(object, "IsoFeedingTrough") then
     context.troughSubmenu = mainSubMenu
@@ -754,7 +753,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     isTrough = true
   end
 
-  if not isTrough then
+  if not isTrough and not isPlumbed then
     mainSubMenu:addOption(
       getText("Fluid_Show_Info"),
       player,
@@ -762,12 +761,14 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
       object:getFluidContainer()
     )
   end
-  mainSubMenu:addOption(
-    getText("Fluid_Transfer_Fluids"),
-    player,
-    ISWorldObjectContextMenu.onFluidTransfer,
-    object:getFluidContainer()
-  )
+  if not isPlumbed then
+    mainSubMenu:addOption(
+      getText("Fluid_Transfer_Fluids"),
+      player,
+      ISWorldObjectContextMenu.onFluidTransfer,
+      object:getFluidContainer()
+    )
+  end
 
   if object:hasFluid() or getPlumbedHasWater(object) then
     ISWorldObjectContextMenu.doDrinkWaterMenu(object, player, mainSubMenu)
@@ -832,6 +833,8 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
     return
   end
 
+  ISWorldObjectContextMenu.doFluidContainerMenu(context, waterObject, player)
+
   -- local menu = context:getOptionFromName(getMoveableDisplayName(waterObject) or waterObject:getFluidUiName())
   -- if menu then
   --   local subOption = menu.subOption
@@ -851,6 +854,4 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
   --     end
   --   end
   -- end
-
-  ISWorldObjectContextMenu.doFluidContainerMenu(context, waterObject, player)
 end)
