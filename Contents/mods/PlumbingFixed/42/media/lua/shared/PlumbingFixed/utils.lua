@@ -36,7 +36,7 @@ function getPlumbedSources(waterObject)
             or (
               instanceof(obj, "IsoThumpable")
               and obj:getFluidCapacity() > 0.0
-              and (obj:hasWater() or obj:getFluidAmount() == 0)
+              and (obj:hasWater() or obj:getFluidAmount() > 0)
             )
           )
         then

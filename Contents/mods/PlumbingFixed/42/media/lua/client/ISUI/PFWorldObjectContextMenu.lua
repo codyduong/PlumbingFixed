@@ -1,6 +1,8 @@
 -- overwrites lua\client\ISUI\ISWorldObjectContextMenu.lua
 
 require("lua/client/ISUI/ISWorldObjectContextMenu")
+require("PlumbingFixed/TimedActions/PFTakeWaterAction")
+require("PlumbingFixed/TimedActions/PFWashClothing")
 require("PlumbingFixed/utils")
 
 local tooltipModified = "Modified by Plumbing Fixed"
@@ -728,15 +730,17 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   local containerName = getMoveableDisplayName(object) or object:getFluidUiName()
   local oldOption = context:getOptionFromName(containerName)
   local option = oldOption or context:addOption(containerName, nil, nil)
-  if oldOption then
-    local subOption = oldOption.subOption
-    if subOption then
-      local subMenu = context:getSubMenu(subOption)
-      if subMenu then
-        subMenu:removeFromUIManager()
-      end
-    end
-  end
+
+  -- No need to do this, it'll remove itself naturally
+  -- if oldOption then
+  --   local subOption = oldOption.subOption
+  --   if subOption then
+  --     local subMenu = context:getSubMenu(subOption)
+  --     if subMenu then
+  --       subMenu:removeFromUIManager()
+  --     end
+  --   end
+  -- end
 
   local mainSubMenu = ISContextMenu:getNew(context)
   context:addSubMenu(option, mainSubMenu)
@@ -754,7 +758,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   end
 
   local disabledToolTip = ISWorldObjectContextMenu.addToolTip()
-  disabledToolTip.description = "Disabled by Plumbing Fixed for the time being <BR> (will be fixed in future)"
+  disabledToolTip.description = "Disabled by PlumbingFixed for the time being <BR> (will be fixed in future)"
   if not isTrough then
     local option = mainSubMenu:addOption(
       getText("Fluid_Show_Info"),
@@ -778,11 +782,11 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     option.toolTip = disabledToolTip
   end
 
-  if object:hasFluid() or getPlumbedHasWater(object) then
+  if object:hasFluid() or isPlumbed then
     ISWorldObjectContextMenu.doDrinkWaterMenu(object, player, mainSubMenu)
     ISWorldObjectContextMenu.doFillFluidMenu(object, player, mainSubMenu)
   end
-  if object:hasWater() or getPlumbedHasWater(object) then
+  if object:hasWater() or isPlumbed then
     ISWorldObjectContextMenu.doWashClothingMenu(object, player, mainSubMenu)
   end
 
@@ -796,7 +800,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     if isPlumbed then
       empty.isDisabled = true
       local emptyToolTip = ISWorldObjectContextMenu.addToolTip()
-      emptyToolTip.description = "Disabled by Plumbing Fixed for the time being <BR> (will be fixed in future) <BR> "
+      emptyToolTip.description = "Disabled by PlumbingFixed for the time being <BR> (will be fixed in future) <BR> "
       emptyToolTip.description = emptyToolTip.description
         .. "<RGB:1,0.5,0.5>"
         .. getText("ContextMenu_WillEmptyWarning")
@@ -841,9 +845,10 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
   if waterObject == nil then
     return
   end
-  if not waterObject:hasExternalWaterSource() then
-    return
-  end
+  -- broken?
+  -- if not waterObject:hasExternalWaterSource() then
+  --   return
+  -- end
 
   ISWorldObjectContextMenu.doFluidContainerMenu(context, waterObject, player)
 
@@ -865,5 +870,29 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
   --       fn(waterObject, player, subMenu)
   --     end
   --   end
+
+  -- This is broken beyond belief and I have no idea why
+  -- local disabledToolTip = ISWorldObjectContextMenu.addToolTip()
+  -- disabledToolTip.description = "Disabled by PlumbingFixed for the time being <BR> (will be fixed in future)"
+  -- local option = subMenu:getOptionFromName(getText("Fluid_Show_Info"))
+  -- if option then
+  --   option.isDisabled = true
+  --   option.toolTip = disabledToolTip
+  -- end
+  -- option = subMenu:getOptionFromName(getText("Fluid_Transfer_Fluids"))
+  -- if option then
+  --   option.isDisabled = true
+  --   option.toolTip = disabledToolTip
+  -- end
+  -- option = subMenu:getOptionFromName(getText("Fluid_Empty"))
+  -- local emptyToolTip = ISWorldObjectContextMenu.addToolTip()
+  -- emptyToolTip.description = "Disabled by PlumbingFixed for the time being <BR> (will be fixed in future) <BR> "
+  -- emptyToolTip.description = emptyToolTip.description
+  --     .. "<RGB:1,0.5,0.5>"
+  --     .. getText("ContextMenu_WillEmptyWarning")
+  -- if option then
+  --   option.isDisabled = true
+  --   option.toolTip = emptyToolTip
+  -- end
   -- end
 end)

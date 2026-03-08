@@ -4,7 +4,7 @@ require("lua/shared/TimedActions/ISTakeWaterAction")
 require("PlumbingFixed/utils")
 
 ---@class PFTakeWaterAction : ISTakeWaterAction
----@field externalWaterSources? IsoObject[]
+-- ---@field externalWaterSources? IsoObject[]
 local PFTakeWaterAction = ISTakeWaterAction
 
 local original = {
@@ -24,11 +24,11 @@ function ISTakeWaterAction:isValid()
   end
 
   --- @cast self PFTakeWaterAction
-  if self.externalWaterSources == nil or #self.externalWaterSources == 0 then
+  if not self.waterObject:hasExternalWaterSource() then
     return self.waterObject:hasFluid()
   end
 
-  for _, src in ipairs(self.externalWaterSources) do
+  for _, src in ipairs(getPlumbedSources(self.waterObject)) do
     -- if src:hasWater() then
     if src:hasFluid() then -- revert? maybe this is causing issues
       return true
@@ -41,7 +41,7 @@ end
 ---@param targetDelta number
 function ISTakeWaterAction:updateUse(targetDelta)
   --- @cast self PFTakeWaterAction
-  if self.externalWaterSources == nil or #self.externalWaterSources == 0 then
+  if not self.waterObject:hasExternalWaterSource() then
     return original.updateUse(self, targetDelta)
   end
 
@@ -65,33 +65,22 @@ end
 
 ---@param _amount number
 function ISTakeWaterAction:transferFromMax(_amount)
-  local maxWaterObj = self.waterObject
-  --- @cast self {externalWaterSources: IsoObject[]}
-  for _, src in ipairs(self.externalWaterSources) do
-    local compareWater = src:getFluidAmount()
-    if maxWaterObj:getFluidAmount() < src:getFluidAmount() then
-      maxWaterObj = src
-    end
-  end
-
-  if _amount <= 0 or maxWaterObj:getFluidAmount() <= 0 then
-    return
-  end
+  local fluidContainer = FluidContainer.CreateContainer()
+  fluidContainer:canAddFluid(Fluid.Water)
+  fluidContainer:setCapacity(10000)
+  removeWaterTopDown(self.waterObject, _amount)
 
   --We transfer to a new container, empty it, then refill with clean water to
   --emulate the old behavior of filtering water. Most likely breaks compat with
   --almost any other plumbing mod that modifies the default 3x3 plumbing behavior
   ---@cast self ISTakeWaterAction
   if self.item then
-    local fluidContainer = maxWaterObj:moveFluidToTemporaryContainer(_amount)
-    fluidContainer:Empty()
     fluidContainer:addFluid(Fluid.Water, _amount)
     fluidContainer:transferTo(self.item:getFluidContainer())
     FluidContainer.DisposeContainer(fluidContainer)
     self.item:syncItemFields()
     sendItemStats(self.item)
   else
-    local fluidContainer = maxWaterObj:moveFluidToTemporaryContainer(_amount)
     fluidContainer:Empty()
     fluidContainer:addFluid(Fluid.Water, _amount)
     self.character:DrinkFluid(fluidContainer, 1)
@@ -114,7 +103,7 @@ function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
   o.item = item
   o.waterObject = waterObject
   o.waterTaintedCL = waterTaintedCL
-  o.externalWaterSources = getPlumbedSources(waterObject)
+  -- o.externalWaterSources = getPlumbedSources(waterObject)
   local waterAvailable = getPlumbedWaterAmount(waterObject)
 
   if o.item ~= nil then
