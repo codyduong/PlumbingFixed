@@ -778,7 +778,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     ISWorldObjectContextMenu.doWashClothingMenu(object, player, mainSubMenu)
   end
 
-  if object:hasFluid() and getPlumbedWaterCapacity(object) < 9999 then -- capacity >= 9999 means infinite water.
+  if object:hasFluid() and getPlumbedWaterCapacity(object) < 9999 and not isPlumbed then -- capacity >= 9999 means infinite water.
     local empty = mainSubMenu:addOption(
       getText("Fluid_Empty"),
       player,
