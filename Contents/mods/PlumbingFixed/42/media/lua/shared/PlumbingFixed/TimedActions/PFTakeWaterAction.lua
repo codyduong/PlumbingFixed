@@ -23,19 +23,11 @@ function ISTakeWaterAction:isValid()
     return false
   end
 
-  --- @cast self PFTakeWaterAction
   if not self.waterObject:hasExternalWaterSource() then
     return self.waterObject:hasFluid()
   end
 
-  for _, src in ipairs(getPlumbedSources(self.waterObject)) do
-    -- if src:hasWater() then
-    if src:hasFluid() then -- revert? maybe this is causing issues
-      return true
-    end
-  end
-
-  return false
+  return getPlumbedWaterAmount(self.waterObject) > 0
 end
 
 ---@param targetDelta number
@@ -68,24 +60,29 @@ function ISTakeWaterAction:transferFromMax(_amount)
   local fluidContainer = FluidContainer.CreateContainer()
   fluidContainer:canAddFluid(Fluid.Water)
   fluidContainer:setCapacity(10000)
-  removeWaterTopDown(self.waterObject, _amount)
+  -- TODO @cduong: this can be unsafe, we need new translations and tooltip to warn player
+  local mixedFluid = removeWaterTopDown(self.waterObject, _amount)
 
   --We transfer to a new container, empty it, then refill with clean water to
   --emulate the old behavior of filtering water. Most likely breaks compat with
   --almost any other plumbing mod that modifies the default 3x3 plumbing behavior
   ---@cast self ISTakeWaterAction
   if self.item then
+    -- TODO @cduong: v2 behavior
+    -- mixedFluid:transferTo(self.item:getFluidContainer())
+    -- FluidContainer.DisposeContainer(fluidContainer)
     fluidContainer:addFluid(Fluid.Water, _amount)
     fluidContainer:transferTo(self.item:getFluidContainer())
-    FluidContainer.DisposeContainer(fluidContainer)
     self.item:syncItemFields()
     sendItemStats(self.item)
   else
     fluidContainer:Empty()
     fluidContainer:addFluid(Fluid.Water, _amount)
     self.character:DrinkFluid(fluidContainer, 1)
-    FluidContainer.DisposeContainer(fluidContainer)
+    
   end
+  FluidContainer.DisposeContainer(mixedFluid)
+  FluidContainer.DisposeContainer(fluidContainer)
 end
 
 ---@param character IsoPlayer

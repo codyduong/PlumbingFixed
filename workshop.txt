@@ -1,10 +1,11 @@
 version=1
-title=PlumbingFixed [B42.14+]
+title=PlumbingFixed [B42.15+]
 description=[h2]Fixes Plumbing for Fixtures[/h2]
 description=Fixes the default behavior of plumbed fixtures that will only pull from one water source until its depleted.
 description=
-description=[b]TESTED/VERIFIED WORKING IN B42.14 SINGLEPLAYER + MULTIPLAYER[/b]
+description=[b]TESTED/VERIFIED WORKING IN B42.15 SINGLEPLAYER + MULTIPLAYER[/b]
 description=
+description=[h3]Features[/h3]
 description=[list]
 description=  [*]Will report all the available water above any plumbed fixture
 description=  [*]Will pull water in an intelligent way, always from the highest amount

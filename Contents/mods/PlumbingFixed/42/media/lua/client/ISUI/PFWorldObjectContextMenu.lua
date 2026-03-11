@@ -176,22 +176,10 @@ ISWorldObjectContextMenu.doWashClothingMenu = function(sink, player, context)
   local washYourself = false
   local washEquipment = false
   local washList = {}
-  local soapList = {}
+  local soapList = playerObj:getInventory():getSoapList(nil, true)
   local noSoap = true
 
   washYourself = ISWashYourself.GetRequiredWater(playerObj) > 0
-
-  local barList = playerInv:getItemsFromType("Soap2", true)
-  for i = 0, barList:size() - 1 do
-    local item = barList:get(i)
-    table.insert(soapList, item)
-  end
-
-  local bottleList = playerInv:getAllEvalRecurse(predicateCleaningLiquid)
-  for i = 0, bottleList:size() - 1 do
-    local item = bottleList:get(i)
-    table.insert(soapList, item)
-  end
 
   local washClothing = {}
   local clothingInventory = playerInv:getItemsFromCategory("Clothing")
@@ -811,27 +799,6 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   return mainSubMenu
 end
 
---- returns the waterObject (that needs adjusting) if there is one
---- @param worldObjects IsoObject[]
---- @return IsoObject?
-local function findWaterObject(worldObjects)
-  -- This first object always has a duplicate in the table, which is why the loop starts at 2.
-  for i = 2, #worldObjects do
-    local square = worldObjects[i]:getSquare()
-    local objects = square:getObjects()
-    -- java array requires 0 index
-    for j = 0, objects:size() - 1 do
-      local object = objects:get(j)
-      if object ~= nil and object:getUsesExternalWaterSource() then
-        local plumbed = getPlumbedSources(object)
-        if #plumbed > 0 then
-          return object
-        end
-      end
-    end
-  end
-end
-
 -- --- @type table<string, fun(object: IsoObject, player: integer, context: ISContextMenu): nil>
 -- local subMenuToRemove = {
 --   [getText("ContextMenu_Drink")] = ISWorldObjectContextMenu.doDrinkWaterMenu,
@@ -845,10 +812,6 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
   if waterObject == nil then
     return
   end
-  -- broken?
-  -- if not waterObject:hasExternalWaterSource() then
-  --   return
-  -- end
 
   ISWorldObjectContextMenu.doFluidContainerMenu(context, waterObject, player)
 

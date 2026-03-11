@@ -25,6 +25,7 @@ function getPlumbedSources(waterObject)
         local props = obj:getProperties()
         local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
         local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
+        local fluidAmount = 
 
         if
           not instanceof(obj, "IsoWorldInventoryObject")
@@ -36,7 +37,7 @@ function getPlumbedSources(waterObject)
             or (
               instanceof(obj, "IsoThumpable")
               and obj:getFluidCapacity() > 0.0
-              and (obj:hasWater() or obj:getFluidAmount() > 0)
+              and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
             )
           )
         then
@@ -55,15 +56,10 @@ function getPlumbedWaterAmount(waterObject)
   local amount = 0.0
 
   for _, src in ipairs(sources) do
-    -- local container = src:getFluidContainer()
-    -- local water = container:getSpecificFluidAmount(Fluid.Water)
-    -- local taintedWater = container:getSpecificFluidAmount(Fluid.TaintedWater)
-    -- local carbonatedWater = container:getSpecificFluidAmount(Fluid.CarbonatedWater)
-    -- amount = amount + water + taintedWater + carbonatedWater
-    amount = amount + src:getFluidAmount() -- temp revert
+    amount = amount + getWaterAmount(src)
   end
   if amount == 0.0 then
-    amount = waterObject:getFluidAmount()
+    amount = getWaterAmount(waterObject)
   end
 
   return amount
@@ -86,26 +82,22 @@ function getPlumbedWaterCapacity(waterObject)
 end
 
 --- @param waterObject IsoObject
---- @return boolean
-function getPlumbedHasWater(waterObject)
-  local sources = getPlumbedSources(waterObject)
-
-  if waterObject:hasWater() then
-    return true
+--- @return number
+function getWaterAmount(waterObject)
+  local container = waterObject:getFluidContainer()
+  -- typically means its empty
+  if container == nil then
+    return 0
   end
 
-  for _, src in ipairs(sources) do
-    local hasWater = src:hasWater()
-    if hasWater then
-      return true
-    end
-  end
-
-  return false
+  return container:getSpecificFluidAmount(Fluid.Water)
+    + container:getSpecificFluidAmount(Fluid.TaintedWater)
+    + container:getSpecificFluidAmount(Fluid.CarbonatedWater)
 end
 
 --- @param waterObject IsoObject
 --- @param amount number
+--- @return FluidContainer
 function removeWaterTopDown(waterObject, amount)
   local srcs = getPlumbedSources(waterObject)
 
@@ -117,7 +109,8 @@ function removeWaterTopDown(waterObject, amount)
   --- @type table<number, { obj: IsoObject, amt: number }>
   local list = {}
   for _, src in ipairs(srcs) do
-    table.insert(list, { obj = src, amt = src:getFluidAmount() })
+    --- @cast src IsoObject
+    table.insert(list, { obj = src, amt = getWaterAmount(src) })
   end
 
   local remaining = amount
@@ -160,12 +153,82 @@ function removeWaterTopDown(waterObject, amount)
     end
   end
 
+  local completeMixed = FluidContainer:CreateContainer()
   for _, item in ipairs(list) do
-    local original = item.obj:getFluidAmount()
+    local original = getWaterAmount(item.obj)
     local toRemove = original - item.amt
     if toRemove > 0 then
-      local container = item.obj:moveFluidToTemporaryContainer(toRemove)
-      FluidContainer.DisposeContainer(container)
+      -- purify only tainted water
+      local mixed = item.obj:moveFluidToTemporaryContainer(toRemove)
+      local allFluids = Fluid.getAllFluids()
+      for i=0, allFluids:size() - 1 do
+        local fluid = allFluids:get(i)
+
+        local specificFluidAmount = mixed:getSpecificFluidAmount(fluid)
+        if fluid == Fluid.TaintedWater then
+          completeMixed:addFluid(Fluid.Water, specificFluidAmount)
+        else
+          completeMixed:addFluid(fluid, specificFluidAmount)
+        end
+      end
+      -- local container = item.obj:moveFluidToTemporaryContainer(toRemove)
+      -- FluidContainer.DisposeContainer(container)
+
+      --- @param waterObj IsoObject
+      --- @param removeAmt number
+      --- @param fluid Fluid
+      -- local function removeFluidType(waterObj, removeAmt, fluid)
+      --   if removeAmt == 0 then
+      --     return 0
+      --   end
+
+      --   local fluidContainer = waterObj:getFluidContainer()
+      --   local adjustedAmt = math.max(0, fluidContainer:getSpecificFluidAmount(fluid) - removeAmt)
+      --   local remainder = removeAmt - fluidContainer:getSpecificFluidAmount(fluid)
+      --   -- fluidContainer:adjustSpecificFluidAmount(fluid, adjustedAmt)
+      --   if fluidContainer:isPureFluid(fluid) then
+      --     local toDispose = waterObj:moveFluidToTemporaryContainer(removeAmt)
+      --     toDispose:transferTo(removedFluidContainer)
+      --     FluidContainer:DisposeContainer(toDispose)
+      --   else
+          
+      --   end
+
+      --   if remainder < 0.0001 then
+      --     return 0
+      --   end
+      --   return remainder
+      -- end
+
+      -- -- just naive prio water types
+      -- local remainder = toRemove
+      -- remainder = removeFluidType(item.obj, remainder, Fluid.TaintedWater)
+      -- remainder = removeFluidType(item.obj, remainder, Fluid.Water)
+      -- remainder = removeFluidType(item.obj, remainder, Fluid.CarbonatedWater)
+
+      -- invariant: should never be able to get here since we check only for these fluid types
+    end
+  end
+
+  return completeMixed
+end
+
+--- returns the waterObject (that needs adjusting) if there is one
+--- @param worldObjects IsoObject[]
+--- @return IsoObject?
+function findWaterObject(worldObjects)
+  for i = 1, #worldObjects do
+    local square = worldObjects[i]:getSquare()
+    local objects = square:getObjects()
+    -- java array requires 0 index
+    for j = 0, objects:size() - 1 do
+      local object = objects:get(j)
+      if object ~= nil and object:getUsesExternalWaterSource() then
+        local plumbed = getPlumbedSources(object)
+        if #plumbed > 0 then
+          return object
+        end
+      end
     end
   end
 end

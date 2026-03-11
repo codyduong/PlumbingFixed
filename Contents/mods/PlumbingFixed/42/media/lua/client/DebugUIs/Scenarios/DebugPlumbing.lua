@@ -211,7 +211,7 @@ debugScenarios.DebugPlumbing = {
 
     for i, barrel in ipairs(barrels) do
       --- @cast barrel IsoThumpable
-      barrel:getFluidContainer():addFluid(Fluid.Water, 15 * i)
+      barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
     end
 
     -- local stair = fuckYouSq(8349, 7189, 0)
@@ -234,7 +234,14 @@ debugScenarios.DebugPlumbing = {
     -- unplumbed
     threeByThree(8354, 7184, 0, true)
     threeByThree(8354, 7184, 1, false)
-    createBarrelOnSq(8354, 7184, 1, "carpentry_02_122")
+    local mixedBarrel = createBarrelOnSq(8354, 7184, 1, "carpentry_02_122")
+    local mixedBarrelFC = mixedBarrel:getFluidContainer()
+    mixedBarrelFC:addFluid(Fluid.TaintedWater, 10)
+    mixedBarrelFC:addFluid(Fluid.Water, 5)
+    mixedBarrelFC:addFluid(Fluid.TaintedWater, 10)
+    mixedBarrelFC:addFluid(Fluid.CarbonatedWater, 20)
+    mixedBarrelFC:addFluid(Fluid.Beer, 10)
+    mixedBarrelFC:addFluid(Fluid.Bleach, 10)
     centerSq = getCell():getGridSquare(8355, 7185, 0)
     centerSq:addTileObject("fixtures_sinks_01_32")
     sink = centerSq:getObjectWithSprite("fixtures_sinks_01_32")
