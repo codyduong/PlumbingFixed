@@ -79,7 +79,6 @@ function ISTakeWaterAction:transferFromMax(_amount)
     fluidContainer:Empty()
     fluidContainer:addFluid(Fluid.Water, _amount)
     self.character:DrinkFluid(fluidContainer, 1)
-    
   end
   FluidContainer.DisposeContainer(mixedFluid)
   FluidContainer.DisposeContainer(fluidContainer)

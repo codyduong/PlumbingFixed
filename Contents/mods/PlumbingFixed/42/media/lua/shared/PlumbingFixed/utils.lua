@@ -25,7 +25,6 @@ function getPlumbedSources(waterObject)
         local props = obj:getProperties()
         local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
         local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
-        local fluidAmount = 
 
         if
           not instanceof(obj, "IsoWorldInventoryObject")
@@ -161,7 +160,7 @@ function removeWaterTopDown(waterObject, amount)
       -- purify only tainted water
       local mixed = item.obj:moveFluidToTemporaryContainer(toRemove)
       local allFluids = Fluid.getAllFluids()
-      for i=0, allFluids:size() - 1 do
+      for i = 0, allFluids:size() - 1 do
         local fluid = allFluids:get(i)
 
         local specificFluidAmount = mixed:getSpecificFluidAmount(fluid)
@@ -191,7 +190,7 @@ function removeWaterTopDown(waterObject, amount)
       --     toDispose:transferTo(removedFluidContainer)
       --     FluidContainer:DisposeContainer(toDispose)
       --   else
-          
+
       --   end
 
       --   if remainder < 0.0001 then
