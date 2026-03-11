@@ -176,8 +176,8 @@ ISWorldObjectContextMenu.doWashClothingMenu = function(sink, player, context)
   local washYourself = false
   local washEquipment = false
   local washList = {}
-  ---@diagnostic disable-next-line: undefined-global
-  local soapList = character:getInventory():getSoapList(nil, true)
+  --- @diagnostic disable-next-line: undefined-field
+  local soapList = playerObj:getInventory():getSoapList(nil, true)
   local noSoap = true
 
   washYourself = ISWashYourself.GetRequiredWater(playerObj) > 0
@@ -248,8 +248,10 @@ ISWorldObjectContextMenu.doWashClothingMenu = function(sink, player, context)
     -- mainOptionTooltip.description = tooltipModified
     -- mainOption.toolTip = mainOptionTooltip
 
+    --- @type number
     local soapRemaining = 0
-    if soapList and #soapList >= 1 then
+    --- @cast soapList PZArrayList<InventoryItem>
+    if soapList and soapList:size() >= 1 then
       soapRemaining = ISWashClothing.GetSoapRemaining(soapList)
     end
     local waterRemaining = getPlumbedWaterAmount(sink)
