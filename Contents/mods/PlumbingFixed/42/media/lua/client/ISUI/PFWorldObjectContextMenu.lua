@@ -176,7 +176,8 @@ ISWorldObjectContextMenu.doWashClothingMenu = function(sink, player, context)
   local washYourself = false
   local washEquipment = false
   local washList = {}
-  local soapList = playerObj:getInventory():getSoapList(nil, true)
+  ---@diagnostic disable-next-line: undefined-global
+  local soapList = character:getInventory():getSoapList(nil, true)
   local noSoap = true
 
   washYourself = ISWashYourself.GetRequiredWater(playerObj) > 0
