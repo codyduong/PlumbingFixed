@@ -188,7 +188,7 @@ function removeWaterTopDown(waterObject, amount)
       --   if fluidContainer:isPureFluid(fluid) then
       --     local toDispose = waterObj:moveFluidToTemporaryContainer(removeAmt)
       --     toDispose:transferTo(removedFluidContainer)
-      --     FluidContainer:DisposeContainer(toDispose)
+      --     FluidContainer.DisposeContainer(toDispose)
       --   else
 
       --   end

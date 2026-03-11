@@ -70,7 +70,7 @@ function ISWashClothing:complete()
     self.character:setSecondaryHandItem(item)
   end
 
-  FluidContainer:DisposeContainer(removeWaterTopDown(self.sink, water))
+  FluidContainer.DisposeContainer(removeWaterTopDown(self.sink, water))
 
   return true
 end
