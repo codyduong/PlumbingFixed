@@ -24,6 +24,7 @@ jobs:
           submodules: recursive
 
       - name: Cache Cargo
+        id: cache-cargo
         uses: actions/cache@v4
         with:
           path: |
@@ -38,6 +39,7 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Install EmmyLua Check
+        if: steps.cache-cargo.outputs.cache-hit != 'true'
         run: cargo install emmylua_check
 
       - name: Validate Lua Files
