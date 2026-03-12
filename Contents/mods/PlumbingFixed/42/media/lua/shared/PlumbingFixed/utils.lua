@@ -98,7 +98,10 @@ end
 --- @param amount number
 --- @return FluidContainer
 function removeWaterTopDown(waterObject, amount)
-  DebugLog.log(DebugType.Mod, "PlumbingFixed (utils) - removeWaterTopDown called with: "..waterObject:toString()..", "..tostring(amount))
+  DebugLog.log(
+    DebugType.Mod,
+    "PlumbingFixed (utils) - removeWaterTopDown called with: " .. waterObject:toString() .. ", " .. tostring(amount)
+  )
   local srcs = getPlumbedSources(waterObject)
 
   if #srcs == 0 then
@@ -211,7 +214,7 @@ function removeWaterTopDown(waterObject, amount)
       -- invariant: should never be able to get here since we check only for these fluid types
     end
   end
-  DebugLog.log(DebugType.Mod, "PlumbingFixed (utils.removeWaterTopDown) - "..completeMixed:toString())
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (utils.removeWaterTopDown) - " .. completeMixed:toString())
 
   return completeMixed
 end

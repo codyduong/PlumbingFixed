@@ -26,7 +26,10 @@ function ISTakeWaterAction:isValid()
     return self.waterObject:hasFluid()
   end
 
-  DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:isValid) last result "..tostring(getPlumbedWaterAmount(self.waterObject)))
+  DebugLog.log(
+    DebugType.Mod,
+    "PlumbingFixed (PFTakeWaterAction:isValid) last result " .. tostring(getPlumbedWaterAmount(self.waterObject))
+  )
   return getPlumbedWaterAmount(self.waterObject) > 0
 end
 
@@ -35,7 +38,7 @@ function ISTakeWaterAction:updateUse(targetDelta)
   -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) called with targetDelta "..tostring(targetDelta))
 
   -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject "..tostring(self.waterObject:toString()))
-  
+
   -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject:hasExternalWaterSource() "..tostring(self.waterObject:hasExternalWaterSource()))
 
   -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject:getUsesExternalWaterSource() "..tostring(self.waterObject:getUsesExternalWaterSource()))
@@ -48,7 +51,7 @@ function ISTakeWaterAction:updateUse(targetDelta)
     return original.updateUse(self, targetDelta)
   end
 
-  DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterUnit "..tostring(self.waterUnit))
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterUnit " .. tostring(self.waterUnit))
   if self.waterUnit and self.waterUnit > 0 then
     local usedTarget = self.waterUnit * targetDelta
 
@@ -63,9 +66,9 @@ function ISTakeWaterAction:updateUse(targetDelta)
     local usedSoFar = currentUsedAmount - self.startUsedAmount
 
     local toUseAmount = math.max(0, usedTarget - usedSoFar)
-    
-    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) usedSoFar "..tostring(usedSoFar))
-    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) toUseAmount "..tostring(usedSoFar))
+
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) usedSoFar " .. tostring(usedSoFar))
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) toUseAmount " .. tostring(usedSoFar))
     self:transferFromMax(toUseAmount)
   end
 end
@@ -82,13 +85,26 @@ function ISTakeWaterAction:transferFromMax(_amount)
   --almost any other plumbing mod that modifies the default 3x3 plumbing behavior
   ---@cast self ISTakeWaterAction
   if self.item then
-    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:transferFromMax) - transfering "..tostring(_amount).." "..fluidContainer:getUiName().." to item")
+    DebugLog.log(
+      DebugType.Mod,
+      "PlumbingFixed (PFTakeWaterAction:transferFromMax) - transfering "
+        .. tostring(_amount)
+        .. " "
+        .. fluidContainer:getUiName()
+        .. " to item"
+    )
     fluidContainer:addFluid(Fluid.Water, _amount)
     fluidContainer:transferTo(self.item:getFluidContainer())
     self.item:syncItemFields()
     sendItemStats(self.item)
   else
-    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:transferFromMax) - drinking "..tostring(_amount).." "..fluidContainer:getUiName())
+    DebugLog.log(
+      DebugType.Mod,
+      "PlumbingFixed (PFTakeWaterAction:transferFromMax) - drinking "
+        .. tostring(_amount)
+        .. " "
+        .. fluidContainer:getUiName()
+    )
     fluidContainer:addFluid(Fluid.Water, _amount)
     self.character:DrinkFluid(fluidContainer, 1)
   end
