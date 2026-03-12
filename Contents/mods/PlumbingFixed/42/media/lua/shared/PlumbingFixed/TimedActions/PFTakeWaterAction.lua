@@ -47,7 +47,7 @@ function ISTakeWaterAction:updateUse(targetDelta)
   -- so we'll have to use getUsesExternalWaterSource here
 
   --- @cast self PFTakeWaterAction
-  if self:getUsesExternalWaterSource() ~= true then
+  if self.waterObject:getUsesExternalWaterSource() ~= true then
     return original.updateUse(self, targetDelta)
   end
 
