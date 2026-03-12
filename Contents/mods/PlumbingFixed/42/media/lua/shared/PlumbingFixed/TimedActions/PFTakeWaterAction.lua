@@ -4,7 +4,6 @@ require("lua/shared/TimedActions/ISTakeWaterAction")
 require("PlumbingFixed/utils")
 
 ---@class PFTakeWaterAction : ISTakeWaterAction
--- ---@field externalWaterSources? IsoObject[]
 local PFTakeWaterAction = ISTakeWaterAction
 
 local original = {
@@ -23,20 +22,33 @@ function ISTakeWaterAction:isValid()
     return false
   end
 
-  if not self.waterObject:hasExternalWaterSource() then
+  if not self.waterObject:getUsesExternalWaterSource() then
     return self.waterObject:hasFluid()
   end
 
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:isValid) last result "..tostring(getPlumbedWaterAmount(self.waterObject)))
   return getPlumbedWaterAmount(self.waterObject) > 0
 end
 
 ---@param targetDelta number
 function ISTakeWaterAction:updateUse(targetDelta)
+  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) called with targetDelta "..tostring(targetDelta))
+
+  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject "..tostring(self.waterObject:toString()))
+  
+  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject:hasExternalWaterSource() "..tostring(self.waterObject:hasExternalWaterSource()))
+
+  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject:getUsesExternalWaterSource() "..tostring(self.waterObject:getUsesExternalWaterSource()))
+
+  -- It seems like hasExternalWaterSource() is unreliable on the server
+  -- so we'll have to use getUsesExternalWaterSource here
+
   --- @cast self PFTakeWaterAction
-  if not self.waterObject:hasExternalWaterSource() then
+  if self:getUsesExternalWaterSource() ~= true then
     return original.updateUse(self, targetDelta)
   end
 
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterUnit "..tostring(self.waterUnit))
   if self.waterUnit and self.waterUnit > 0 then
     local usedTarget = self.waterUnit * targetDelta
 
@@ -51,36 +63,35 @@ function ISTakeWaterAction:updateUse(targetDelta)
     local usedSoFar = currentUsedAmount - self.startUsedAmount
 
     local toUseAmount = math.max(0, usedTarget - usedSoFar)
+    
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) usedSoFar "..tostring(usedSoFar))
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) toUseAmount "..tostring(usedSoFar))
     self:transferFromMax(toUseAmount)
   end
 end
 
 ---@param _amount number
 function ISTakeWaterAction:transferFromMax(_amount)
+  local mixed = removeWaterTopDown(self.waterObject, _amount)
   local fluidContainer = FluidContainer.CreateContainer()
   fluidContainer:canAddFluid(Fluid.Water)
   fluidContainer:setCapacity(10000)
-  -- TODO @cduong: this can be unsafe, we need new translations and tooltip to warn player
-  local mixedFluid = removeWaterTopDown(self.waterObject, _amount)
 
   --We transfer to a new container, empty it, then refill with clean water to
   --emulate the old behavior of filtering water. Most likely breaks compat with
   --almost any other plumbing mod that modifies the default 3x3 plumbing behavior
   ---@cast self ISTakeWaterAction
   if self.item then
-    -- TODO @cduong: v2 behavior
-    -- mixedFluid:transferTo(self.item:getFluidContainer())
-    -- FluidContainer.DisposeContainer(fluidContainer)
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:transferFromMax) - transfering "..tostring(_amount).." "..fluidContainer:getUiName().." to item")
     fluidContainer:addFluid(Fluid.Water, _amount)
     fluidContainer:transferTo(self.item:getFluidContainer())
     self.item:syncItemFields()
     sendItemStats(self.item)
   else
-    fluidContainer:Empty()
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:transferFromMax) - drinking "..tostring(_amount).." "..fluidContainer:getUiName())
     fluidContainer:addFluid(Fluid.Water, _amount)
     self.character:DrinkFluid(fluidContainer, 1)
   end
-  FluidContainer.DisposeContainer(mixedFluid)
   FluidContainer.DisposeContainer(fluidContainer)
 end
 
@@ -91,8 +102,10 @@ end
 ---@return ISTakeWaterAction
 function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
   if not waterObject:getUsesExternalWaterSource() then
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:new) - NOT using custom constructor")
     return originalNew(self, character, item, waterObject, waterTaintedCL)
   end
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:new) - using custom constructor")
 
   ---@cast ISBaseTimedAction.new fun(character: IsoPlayer): PFTakeWaterAction
   local o = ISBaseTimedAction.new(self, character)

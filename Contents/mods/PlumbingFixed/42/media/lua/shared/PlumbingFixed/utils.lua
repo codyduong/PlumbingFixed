@@ -2,7 +2,7 @@
 ---@return IsoObject[]
 function getPlumbedSources(waterObject)
   local sources = {}
-  if not waterObject:hasExternalWaterSource() then
+  if not waterObject:getUsesExternalWaterSource() then
     return sources
   end
   local sq = waterObject:getSquare()
@@ -98,11 +98,12 @@ end
 --- @param amount number
 --- @return FluidContainer
 function removeWaterTopDown(waterObject, amount)
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (utils) - removeWaterTopDown called with: "..waterObject:toString()..", "..tostring(amount))
   local srcs = getPlumbedSources(waterObject)
 
   if #srcs == 0 then
     local container = waterObject:moveFluidToTemporaryContainer(amount)
-    FluidContainer.DisposeContainer(container)
+    return container
   end
 
   --- @type table<number, { obj: IsoObject, amt: number }>
@@ -170,6 +171,8 @@ function removeWaterTopDown(waterObject, amount)
           completeMixed:addFluid(fluid, specificFluidAmount)
         end
       end
+      FluidContainer.DisposeContainer(mixed)
+
       -- local container = item.obj:moveFluidToTemporaryContainer(toRemove)
       -- FluidContainer.DisposeContainer(container)
 
@@ -208,6 +211,7 @@ function removeWaterTopDown(waterObject, amount)
       -- invariant: should never be able to get here since we check only for these fluid types
     end
   end
+  DebugLog.log(DebugType.Mod, "PlumbingFixed (utils.removeWaterTopDown) - "..completeMixed:toString())
 
   return completeMixed
 end

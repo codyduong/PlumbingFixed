@@ -1,4 +1,5 @@
 require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/TimedActions/PFWashClothing")
 
--- print("init PlumbingFixed")
+-- DebugLog.setLogSeverity(DebugType.Mod, LogSeverity.All)
+DebugLog.log(DebugType.Mod, "PlumbingFixed - initialized on server")
