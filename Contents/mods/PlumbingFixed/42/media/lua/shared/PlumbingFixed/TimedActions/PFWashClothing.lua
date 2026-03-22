@@ -5,10 +5,15 @@ require("PlumbingFixed/utils")
 local PFWashClothing = ISWashClothing
 
 local original = {
+  isValid = ISWashClothing.isValid,
   complete = ISWashClothing.complete,
 }
 
 function ISWashClothing:isValid()
+  if not self.sink:hasExternalWaterSource() then
+    return original.isValid(self)
+  end
+
   if getPlumbedWaterAmount(self.sink) < ISWashClothing.GetRequiredWater(self.item) then
     return false
   end
