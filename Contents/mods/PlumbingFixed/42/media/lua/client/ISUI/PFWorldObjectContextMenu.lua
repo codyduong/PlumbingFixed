@@ -740,7 +740,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
   -- mainSubMenu.toolTip = mainSubMenuTooltip
 
   local isTrough = false
-  local isPlumbed = object:hasExternalWaterSource()
+  local isPlumbedB = isPlumbed(object)
   -- so i can add my specifics thing for feeding trough (as it can have food too) in this context option.
   if instanceof(object, "IsoFeedingTrough") then
     context.troughSubmenu = mainSubMenu
@@ -757,7 +757,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
       ISWorldObjectContextMenu.onFluidInfo,
       object:getFluidContainer()
     )
-    if isPlumbed then
+    if isPlumbedB then
       option.isDisabled = true
       option.toolTip = disabledToolTip
     end
@@ -768,16 +768,16 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
     ISWorldObjectContextMenu.onFluidTransfer,
     object:getFluidContainer()
   )
-  if isPlumbed then
+  if isPlumbedB then
     option.isDisabled = true
     option.toolTip = disabledToolTip
   end
 
-  if object:hasFluid() or isPlumbed then
+  if object:hasFluid() or isPlumbedB then
     ISWorldObjectContextMenu.doDrinkWaterMenu(object, player, mainSubMenu)
     ISWorldObjectContextMenu.doFillFluidMenu(object, player, mainSubMenu)
   end
-  if object:hasWater() or isPlumbed then
+  if object:hasWater() or isPlumbedB then
     ISWorldObjectContextMenu.doWashClothingMenu(object, player, mainSubMenu)
   end
 
@@ -788,7 +788,7 @@ function ISWorldObjectContextMenu.doFluidContainerMenu(context, object, player)
       ISWorldObjectContextMenu.onFluidEmpty,
       object:getFluidContainer()
     )
-    if isPlumbed then
+    if isPlumbedB then
       empty.isDisabled = true
       local emptyToolTip = ISWorldObjectContextMenu.addToolTip()
       emptyToolTip.description = "Disabled by PlumbingFixed for the time being <BR> (will be fixed in future) <BR> "

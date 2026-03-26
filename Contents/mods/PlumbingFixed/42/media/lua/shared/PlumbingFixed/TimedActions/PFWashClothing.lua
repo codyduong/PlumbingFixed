@@ -10,7 +10,7 @@ local original = {
 }
 
 function ISWashClothing:isValid()
-  if not self.sink:getUsesExternalWaterSource() then
+  if not isPlumbed(self.sink) then
     return original.isValid(self)
   end
 
@@ -25,7 +25,7 @@ function ISWashClothing:isValid()
 end
 
 function ISWashClothing:complete()
-  if not self.sink:getUsesExternalWaterSource() then
+  if not isPlumbed(self.sink) then
     return original.complete(self)
   end
 

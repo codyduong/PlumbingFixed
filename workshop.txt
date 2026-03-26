@@ -13,6 +13,10 @@ description=  [*]Otherwise will pull from all water sources equally
 description=  [*]This means your water barrels will always be around similiar levels
 description=[/list]
 description=
+description=[h3]Known Issues/Inadvertent Behavior[/h3]
+description=This mod will automatically convert anything in plumbed barrels to water. IE. don't store gasoline above plumbed stuff.
+description=I am hoping to resolve this in a future version, since fluid mixing was introduced into B42. However, this will require a UI overhaul as well as some translation help, since it will have to alert players when they are drinking poisonous water (ie. someone put bleach in the water), as well as other features. Likely to come when B42 is finally stable or not for a while, since this is a pretty uncommon scenario.
+description=
 description=[url=https://github.com/codyduong/PlumbingFixed/issues][h3]Post Issues Here[/h3][/url]
 description=[url=https://github.com/codyduong/PlumbingFixed][h3]GitHub Repository[/h3][/url]
 description=

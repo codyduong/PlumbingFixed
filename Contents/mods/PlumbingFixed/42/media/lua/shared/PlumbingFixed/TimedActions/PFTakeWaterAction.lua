@@ -22,7 +22,7 @@ function ISTakeWaterAction:isValid()
     return false
   end
 
-  if not self.waterObject:getUsesExternalWaterSource() then
+  if not isPlumbed(self.waterObject) then
     return self.waterObject:hasFluid()
   end
 
@@ -128,14 +128,18 @@ function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
   o.item = item
   o.waterObject = waterObject
   o.waterTaintedCL = waterTaintedCL
-  -- o.externalWaterSources = getPlumbedSources(waterObject)
-  local waterAvailable = getPlumbedWaterAmount(waterObject)
 
+  local waterAvailable = getPlumbedWaterAmount(waterObject)
   if o.item ~= nil then
     if o.item:getFluidContainer() then
       o.startUsedAmount = o.item:getFluidContainer():getAmount()
       o.endUsedAmount = o.item:getFluidContainer():getCapacity()
-      o.waterUnit = math.min(o.endUsedAmount - o.startUsedAmount, waterAvailable)
+      -- o.waterUnit = math.min(o.endUsedAmount - o.startUsedAmount, waterAvailable)
+      local freeInventoryCapacity = character:getFreeInventoryCapacity()
+      if o.item:isEquipped() or character:isEquippedClothing(o.item) then
+        freeInventoryCapacity = freeInventoryCapacity / ZomboidGlobals.EquippedOrWornEncumbranceMultiplier
+      end
+      o.waterUnit = math.min(o.endUsedAmount - o.startUsedAmount, waterAvailable, freeInventoryCapacity)
     end
   else
     local thirst = o.character:getStats():get(CharacterStat.THIRST) * 2

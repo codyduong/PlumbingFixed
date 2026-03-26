@@ -207,7 +207,10 @@ debugScenarios.DebugPlumbing = {
     local centerSq = getCell():getGridSquare(8350, 7185, 0)
     centerSq:addTileObject("fixtures_sinks_01_32")
     local sink = centerSq:getObjectWithSprite("fixtures_sinks_01_32")
+    sink:getModData().canBeWaterPiped = false
     sink:setUsesExternalWaterSource(true)
+    sink:transmitModData()
+    sink:sendObjectChange("usesExternalWaterSource", { value = true })
 
     for i, barrel in ipairs(barrels) do
       --- @cast barrel IsoThumpable

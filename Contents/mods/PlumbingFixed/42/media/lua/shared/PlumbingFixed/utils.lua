@@ -2,7 +2,7 @@
 ---@return IsoObject[]
 function getPlumbedSources(waterObject)
   local sources = {}
-  if not waterObject:getUsesExternalWaterSource() then
+  if not isPlumbed(waterObject) then
     return sources
   end
   local sq = waterObject:getSquare()
@@ -229,7 +229,7 @@ function findWaterObject(worldObjects)
     -- java array requires 0 index
     for j = 0, objects:size() - 1 do
       local object = objects:get(j)
-      if object ~= nil and object:getUsesExternalWaterSource() then
+      if object ~= nil and isPlumbed(object) then
         local plumbed = getPlumbedSources(object)
         if #plumbed > 0 then
           return object
@@ -237,4 +237,11 @@ function findWaterObject(worldObjects)
       end
     end
   end
+end
+
+--- @param waterObject IsoObject
+--- @return boolean
+function isPlumbed(waterObject)
+  local isPlumbedFlag = waterObject:getModData().canBeWaterPiped == false
+  return waterObject:hasExternalWaterSource() or waterObject:getUsesExternalWaterSource() or isPlumbedFlag
 end
