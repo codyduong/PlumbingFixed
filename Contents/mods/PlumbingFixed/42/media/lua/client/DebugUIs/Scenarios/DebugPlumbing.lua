@@ -210,7 +210,7 @@ debugScenarios.DebugPlumbing = {
     sink:getModData().canBeWaterPiped = false
     sink:setUsesExternalWaterSource(true)
     sink:transmitModData()
-    sink:sendObjectChange("usesExternalWaterSource", { value = true })
+    -- sink:sendObjectChange("usesExternalWaterSource", { value = true })
 
     for i, barrel in ipairs(barrels) do
       --- @cast barrel IsoThumpable
