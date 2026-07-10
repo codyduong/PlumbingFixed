@@ -1,4 +1,12 @@
-[h2]Fixes Plumbing for Fixtures[/h2]
+"workshopitem"
+{
+	"appid" "108600"
+	"publishedfileid" "{{PUBLISHEDFILEID}}"
+	"contentfolder" "{{CONTENTFOLDER}}"
+	"previewfile" "{{PREVIEWFILE}}"
+	"changenote" "{{CHANGENOTE}}"
+	"title" "PlumbingFixed [B42.19+]"
+	"description" "[h2]Fixes Plumbing for Fixtures[/h2]
 Fixes the default behavior of plumbed fixtures that will only pull from one water source until its depleted.
 
 [b]TESTED/VERIFIED WORKING IN B42.15.2 SINGLEPLAYER + MULTIPLAYER[/b]
@@ -21,4 +29,7 @@ I am hoping to resolve this in a future version, since fluid mixing was introduc
 [h3]Copyright (c) 2026 Cody Duong, and contributers[/h3]
 
 Workshop ID: 3626008449
-Mod ID: PlumbingFixed
+Mod ID: PlumbingFixed"
+	"tags" "Build 42,QoL,Interface"
+	"visibility" "0"
+}

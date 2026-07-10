@@ -1,17 +1,17 @@
 #!/usr/bin/env pwsh
 # Publish the packaged mod to the Steam Workshop via steamcmd (updates the existing item).
 #
-# Page metadata lives in workshop/workshop.conf (flat key=value) and the description
-# verbatim in workshop/description.bbcode. See docs/RELEASING.md.
+# SOURCE OF TRUTH is workshop/workshop.vdf — a steamcmd KeyValues file stored verbatim. This
+# script only substitutes the dynamic fields ({{PUBLISHEDFILEID}}, {{CONTENTFOLDER}},
+# {{PREVIEWFILE}}, {{CHANGENOTE}}); title/description/tags/visibility are edited directly in
+# that file. See docs/RELEASING.md.
 #
 # The publish TARGET (test|prod) is REQUIRED (unless -DryRun) so we're always explicit about
 # which Workshop item we touch — there is no default and no env fallback.
 #
-# Usage: pwsh -NoProfile -File scripts/publish-workshop.ps1 <test|prod> "changenote" [flags]
+# Usage: pwsh -NoProfile -File scripts/publish-workshop.ps1 <test|prod> "changenote" [-DryRun]
 #    or: mise run publish test "Fixed multi-barrel draw on 42.19"   (verify, then: ... prod ...)
-# Flags (explicit — behavior is never driven by ambient env):
-#   -DryRun      / --dry-run        build + print the VDF, don't upload (defaults target to test)
-#   -ContentOnly / --content-only   skip title/description/tags/visibility
+#   -DryRun / --dry-run   build + print the VDF, don't upload (defaults target to test)
 
 param(
   [Parameter(Position = 0)]
@@ -19,8 +19,6 @@ param(
   [Parameter(Position = 1)]
   [string]$ChangeNote = "",
   [string]$SteamUser = $env:STEAM_USERNAME,
-  [string]$AppId = $env:PF_APPID,
-  [switch]$ContentOnly,
   [switch]$DryRun,
   [Parameter(ValueFromRemainingArguments = $true)]
   [string[]]$ExtraArgs
@@ -30,101 +28,39 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
-# Accept POSIX-style flag aliases (--dry-run / --content-only) for parity with the .sh twin.
+# Accept the POSIX-style --dry-run alias for parity with the .sh twin.
 foreach ($a in $ExtraArgs) {
   switch -Exact ($a) {
     '--dry-run' { $DryRun = $true }
-    '--content-only' { $ContentOnly = $true }
     default { Write-Host "ERROR: unknown argument '$a'." -ForegroundColor Red; exit 2 }
   }
 }
 
 $MOD_NAME = "PlumbingFixed"
+$APP_ID   = "108600"
+# Workshop item ids are public; test first, then prod.
+$ITEM_IDS = @{ test = "3680940911"; prod = "3626008449" }
 
 # Normalize target/changenote (strip stray surrounding quotes).
 $ChangeNote = $ChangeNote.Trim('"')
 $Target = $Target.Trim('"').ToLower()
 
-# Escape a string for a VDF (KeyValues) quoted value.
-function ConvertTo-VdfValue([string]$s) {
-  if ($null -eq $s) { return "" }
-  $s = $s -replace '\\', '\\'   # backslash first
-  $s = $s -replace '"', '\"'
-  # $s = $s -replace "`r", ''
-  # $s = $s -replace "`n", '\n'
-  # $s = $s -replace "`t", '\t'
-  return $s
-}
-
-# Map a visibility word to steamcmd's integer. steamcmd's VDF takes an int here.
-$visibilityMap = @{ public = 0; friendsonly = 1; private = 2; unlisted = 3 }
-
-# --- Load the source-of-truth metadata --------------------------------------------------
-# workshop/workshop.conf: flat key=value, single-line values, '#' comments.
-$conf = @{}
-foreach ($line in Get-Content "workshop/workshop.conf") {
-  $t = $line.Trim()
-  if (-not $t -or $t.StartsWith('#')) { continue }
-  $kv = $t -split '=', 2
-  if ($kv.Count -eq 2) { $conf[$kv[0].Trim()] = $kv[1].Trim() }
-}
-# Description is read verbatim (no parsing / no escaping guesswork here). Trim the file's
-# trailing newline so the VDF matches the bash twin (its $(cat) strips trailing newlines).
-$description = (Get-Content "workshop/description.bbcode" -Raw)
-if ($null -eq $description) { $description = "" } else { $description = $description -replace '\r?\n\z', '' }
-
-$title = if ($conf.title) { $conf.title } else { $MOD_NAME }
-if (-not $AppId) { $AppId = $conf.app_id }
-$previewRel = if ($conf.preview) { $conf.preview } else { "preview.png" }
-
-# Resolve the publish target -> Workshop item id. Required unless -DryRun so we never publish
-# to an implicit item. Dry-run defaults to 'test' (safe) and says so.
+# Resolve the publish target -> Workshop item id. Required unless -DryRun (defaults to test).
 if (-not $Target) {
   if ($DryRun) {
     $Target = 'test'
-    Write-Host "No -Target given; defaulting DryRun to 'test'." -ForegroundColor Yellow
+    Write-Host "No target given; defaulting DryRun to 'test'." -ForegroundColor Yellow
   } else {
-    Write-Host "ERROR: -Target is required (test|prod) unless -DryRun." -ForegroundColor Red
+    Write-Host "ERROR: a target (test|prod) is required unless -DryRun." -ForegroundColor Red
     Write-Host "       Refusing to publish without an explicit target." -ForegroundColor Red
     exit 2
   }
 }
-switch ($Target) {
-  'prod' { $PublishedFileId = if ($env:PF_PUBLISHED_FILE_ID) { $env:PF_PUBLISHED_FILE_ID } else { $conf.published_id } }
-  'test' { $PublishedFileId = if ($env:PF_TEST_PUBLISHED_FILE_ID) { $env:PF_TEST_PUBLISHED_FILE_ID } else { $conf.test_published_id } }
-  default {
-    Write-Host "ERROR: unknown target '$Target' (expected test or prod)." -ForegroundColor Red
-    exit 2
-  }
-}
-if (-not $PublishedFileId) {
-  Write-Host "ERROR: no item id for target '$Target' — set it in workshop/workshop.conf" -ForegroundColor Red
-  Write-Host "       (published_id / test_published_id) or the matching PF_*_PUBLISHED_FILE_ID env." -ForegroundColor Red
+if (-not $ITEM_IDS.ContainsKey($Target)) {
+  Write-Host "ERROR: unknown target '$Target' (expected test or prod)." -ForegroundColor Red
   exit 2
 }
-
-# tags: manifest ';'-separated -> VDF form (comma-separated). Best-effort validation against
-# the game's media/WorkshopTags.txt when PZ_HOME is set; otherwise pass through.
-$tags = @($conf.tags -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-if ($env:PZ_HOME) {
-  $tagsFile = Join-Path $env:PZ_HOME "media/WorkshopTags.txt"
-  if (Test-Path $tagsFile) {
-    $allowed = Get-Content $tagsFile | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-    foreach ($tg in $tags) {
-      if ($allowed -notcontains $tg) {
-        Write-Host "WARN: tag '$tg' not in $tagsFile" -ForegroundColor Yellow
-      }
-    }
-  }
-}
-
-# visibility word -> steamcmd int.
-$visWord = if ($conf.visibility) { $conf.visibility.ToLower() } else { "public" }
-if (-not $visibilityMap.ContainsKey($visWord)) {
-  Write-Host "ERROR: unknown visibility '$($conf.visibility)' (expected public/friendsOnly/private/unlisted)." -ForegroundColor Red
-  exit 1
-}
-$visibility = $visibilityMap[$visWord]
+$PublishedFileId = $ITEM_IDS[$Target]
 
 # --- Preconditions ----------------------------------------------------------------------
 $haveSteamcmd = [bool](Get-Command steamcmd -ErrorAction SilentlyContinue)
@@ -140,49 +76,38 @@ if (-not $DryRun -and -not $SteamUser) {
 # Build fresh so we never publish stale content.
 $verLine = Get-Content "Contents/mods/$MOD_NAME/42/mod.info" | Where-Object { $_ -match '^modversion=' } | Select-Object -First 1
 $ver = ($verLine -split '=', 2)[1].Trim()
-# Run package.ps1 as a child process so its exit code is reliably in $LASTEXITCODE
-# (calling it with '&' leaves $LASTEXITCODE $null on success — and $null -ne 0 is true).
+# Run package.ps1 as a child process so its exit code is reliably in $LASTEXITCODE.
 pwsh -NoProfile -File (Join-Path $PSScriptRoot "package.ps1") "v$ver"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $contentFolder = (Resolve-Path "./$MOD_NAME").Path
-$previewFile   = (Resolve-Path "./$previewRel").Path
+$previewFile   = (Resolve-Path "./preview.png").Path
 if (-not $ChangeNote) { $ChangeNote = "v$ver" }
 
-# --- Generate the steamcmd VDF ----------------------------------------------------------
+# --- Fill the stored VDF template -------------------------------------------------------
+# Escape a substituted value for a VDF quoted string: backslash first, then double-quote.
+# The template's static values (title/description/tags) already carry their final form —
+# only the dynamic single-line substitutions need escaping, so newlines are never touched.
+function ConvertTo-VdfValue([string]$s) {
+  if ($null -eq $s) { return "" }
+  ($s -replace '\\', '\\') -replace '"', '\"'
+}
+
+$template = Get-Content "workshop/workshop.vdf" -Raw
+$vdf = $template.
+  Replace('{{PUBLISHEDFILEID}}', $PublishedFileId).
+  Replace('{{CONTENTFOLDER}}', (ConvertTo-VdfValue $contentFolder)).
+  Replace('{{PREVIEWFILE}}', (ConvertTo-VdfValue $previewFile)).
+  Replace('{{CHANGENOTE}}', (ConvertTo-VdfValue $ChangeNote))
+
 New-Item -ItemType Directory -Force -Path ".publish" | Out-Null
 $vdfPath = (Join-Path (Get-Location) ".publish\workshop.vdf")
-
-# VDF wants backslash-escaped paths.
-$cf = $contentFolder -replace '\\', '\\'
-$pf = $previewFile   -replace '\\', '\\'
-
-$lines = @(
-  '"workshopitem"'
-  '{'
-  "`t`"appid`" `"$AppId`""
-  "`t`"publishedfileid`" `"$PublishedFileId`""
-  "`t`"contentfolder`" `"$cf`""
-  "`t`"previewfile`" `"$pf`""
-  "`t`"changenote`" `"$(ConvertTo-VdfValue $ChangeNote)`""
-)
-if (-not $ContentOnly) {
-  $lines += "`t`"title`" `"$(ConvertTo-VdfValue $title)`""
-  $lines += "`t`"description`" `"$(ConvertTo-VdfValue $description)`""
-  $lines += "`t`"tags`" `"$(ConvertTo-VdfValue ($tags -join ','))`""
-  $lines += "`t`"visibility`" `"$visibility`""
-}
-$lines += '}'
-Set-Content -Path $vdfPath -Value $lines -Encoding UTF8
+Set-Content -Path $vdfPath -Value $vdf -NoNewline -Encoding UTF8
 
 Write-Host "Wrote VDF -> $vdfPath" -ForegroundColor Cyan
 Write-Host "Content:  $contentFolder" -ForegroundColor Cyan
 Write-Host "Preview:  $previewFile" -ForegroundColor Cyan
-if (-not $ContentOnly) {
-  Write-Host "Title:    $title  (+ description from workshop/description.bbcode)" -ForegroundColor Cyan
-  Write-Host "Tags:     $($tags -join ', ')   Visibility: $visWord ($visibility)" -ForegroundColor Cyan
-}
-Write-Host "Target:   $Target -> item $PublishedFileId (app $AppId)  changenote: $ChangeNote" -ForegroundColor Cyan
+Write-Host "Target:   $Target -> item $PublishedFileId (app $APP_ID)  changenote: $ChangeNote" -ForegroundColor Cyan
 
 if ($DryRun) {
   Write-Host "--- DRY RUN: VDF contents (not uploading) ---" -ForegroundColor Yellow

@@ -55,8 +55,8 @@ If we now require the newer build, update the PZ-build strings (these are **not*
 semver):
 - `Contents/mods/PlumbingFixed/42/mod.info` → `name=PlumbingFixed (B42.<x>)` and
   `versionMin=`/`versionMax=` if applicable.
-- `workshop/workshop.conf` → `title=... [B42.<x>+]`, and `workshop/description.bbcode` → the
-  "TESTED/VERIFIED WORKING IN B42.<x>" line.
+- `workshop/workshop.vdf` → the `title=... [B42.<x>+]` and "TESTED/VERIFIED WORKING IN
+  B42.<x>" lines.
 
 ## 6. Test + release
 

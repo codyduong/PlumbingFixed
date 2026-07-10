@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Set the mod's semver (modversion) in every mod.info so the copies never drift.
 # This is the mod's OWN version (== the release git tag), NOT the targeted PZ build
-# (the "B42.x" marker in 42/mod.info name= and workshop/workshop.conf) — see docs/UPDATING-PZ.md.
+# (the "B42.x" marker in 42/mod.info name= and workshop/workshop.vdf) — see docs/UPDATING-PZ.md.
 # Usage: mise run bump 1.3.14   (or: bash scripts/bump-version.sh 1.3.14)
 set -euo pipefail
 cd "$(dirname "$0")/.."

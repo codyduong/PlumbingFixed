@@ -82,11 +82,11 @@ Mod content lives under `Contents/mods/PlumbingFixed/` with PZ's multi-build lay
 - `41/` — a **stub** (`mod.info` + `poster.png` only, no Lua) for B41 compatibility metadata.
 - `common/` — empty placeholder (`.gitkeep`).
 
-Steam Workshop page metadata is **source-controlled** under `workshop/`:
-`workshop/workshop.conf` (flat `key=value`: title/tags/visibility/ids/preview) and
-`workshop/description.bbcode` (the BBCode description, read verbatim). `scripts/publish-workshop.*`
-turn these into the steamcmd VDF. **steamcmd is the only publish path** — the in-game uploader
-(which read the now-removed `workshop.txt`) is no longer supported. See [docs/RELEASING.md](docs/RELEASING.md).
+Steam Workshop page metadata is **source-controlled** as `workshop/workshop.vdf` — a steamcmd
+KeyValues file stored **verbatim** (title/description/tags/visibility/appid). `scripts/publish-workshop.*`
+only substitute the dynamic fields (`{{PUBLISHEDFILEID}}` per target, `{{CONTENTFOLDER}}`/`{{PREVIEWFILE}}`
+built paths, `{{CHANGENOTE}}`) — no bbcode/conf conversion. **steamcmd is the only publish path** — the
+in-game uploader (which read the now-removed `workshop.txt`) is no longer supported. See [docs/RELEASING.md](docs/RELEASING.md).
 
 Lua roots under `42/media/lua/`:
 
@@ -163,8 +163,8 @@ Keep these three aligned with the installed build. When the game updates, follow
   work, not a scaffolding change.
 - **Fluid mixing:** plumbed barrels currently have all fluids converted to water on draw
   (`removeWaterTopDown` purifies tainted→water and pools everything). Storing non-water
-  (gasoline/bleach) above a plumbed fixture is a known inadvertent behavior — see
-  `workshop/description.bbcode`.
+  (gasoline/bleach) above a plumbed fixture is a known inadvertent behavior — documented in the
+  `description` value of `workshop/workshop.vdf`.
 - **B41 stub ships 42 media:** `scripts/package.*` promote `42/media` into the mod root that
   the B41 `mod.info` points at, so a real B41 client would load B42 Lua (likely broken).
   Treated as an open decision (keep the stub vs drop B41), not changed yet.
