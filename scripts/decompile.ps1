@@ -41,7 +41,7 @@ Write-Host "Game: $GamePath" -ForegroundColor Cyan
 $toolRoot = Join-Path $ToolsDir "ZomboidDecompiler"
 $batPath  = Join-Path $toolRoot "bin\ZomboidDecompiler.bat"
 if (-not (Test-Path $batPath)) {
-  Write-Host "Downloading Zomboid Decompiler $DecompilerVersion ..." -ForegroundColor Cyan
+  Write-Host "Downloading Zomboid Decompiler $DecompilerVersion..." -ForegroundColor Cyan
   New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
   $zip = Join-Path $ToolsDir "ZomboidDecompiler.zip"
   $url = "https://github.com/demiurgeQuantified/ZomboidDecompiler/releases/download/$DecompilerVersion/ZomboidDecompiler.zip"
@@ -70,7 +70,7 @@ if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
   if (Test-Path $jreBin) { $env:PATH = "$jreBin;$env:PATH" }
 }
 
-Write-Host "Decompiling (this takes several minutes)..." -ForegroundColor Cyan
+Write-Host "Decompiling..." -ForegroundColor Cyan
 Push-Location $toolRoot
 try {
   & (Join-Path "bin" "ZomboidDecompiler.bat") "$GamePath"

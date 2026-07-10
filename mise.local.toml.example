@@ -8,13 +8,17 @@
 # (scripts/publish-workshop.*).
 
 [env]
-# Steam account used to upload the Workshop item. steamcmd still prompts for the
-# password + Steam Guard code interactively — only the username lives here.
 STEAM_USER = "your_steam_username"
+# More technical users may want to refer to https://mise.jdx.dev/environments/secrets/
+STEAM_PASSWORD = { redact = true, value = "my_steam_password" }
 
-# Optional overrides (defaults shown) — only needed if you fork the mod / item:
-# PF_PUBLISHED_FILE_ID = "3626008449"   # the Steam Workshop item id to update
-# PF_APPID = "108600"                   # Project Zomboid's Steam app id
+# `mise run publish` requires an explicit target: `mise run publish test "note"` or
+# `mise run publish prod "note"`. The target is a CLI arg (never an env default) so every
+# publish is deliberate about which item it touches. The two item ids live in
+# workshop/workshop.conf; the vars below only override them if you fork the mod / item:
+# PF_PUBLISHED_FILE_ID      = "3626008449"   # prod item id  (target: prod)
+# PF_TEST_PUBLISHED_FILE_ID = "3680940911"   # test item id  (target: test)
+# PF_APPID                  = "108600"       # Project Zomboid's Steam app id
 
 # Optional: point the tooling at a non-default install / data dir.
 # PZ_HOME = "F:/steamlibrary/steamapps/common/ProjectZomboid"

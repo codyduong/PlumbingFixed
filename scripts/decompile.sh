@@ -25,7 +25,7 @@ echo "Game: $GAME_PATH"
 
 tool="$TOOLS_DIR/ZomboidDecompiler"
 if [ ! -f "$tool/bin/ZomboidDecompiler" ]; then
-  echo "Downloading Zomboid Decompiler $DECOMPILER_VERSION ..."
+  echo "Downloading Zomboid Decompiler $DECOMPILER_VERSION..."
   mkdir -p "$TOOLS_DIR"
   url="https://github.com/demiurgeQuantified/ZomboidDecompiler/releases/download/$DECOMPILER_VERSION/ZomboidDecompiler.zip"
   curl -fsSL "$url" -o "$TOOLS_DIR/ZomboidDecompiler.zip"
@@ -46,7 +46,7 @@ chmod +x "$tool/bin/ZomboidDecompiler" 2>/dev/null || true
 # JRE (jre64, also Java 17).
 command -v java >/dev/null 2>&1 || { [ -d "$GAME_PATH/jre64/bin" ] && export PATH="$GAME_PATH/jre64/bin:$PATH"; }
 
-echo "Decompiling (this takes several minutes)..."
+echo "Decompiling..."
 ( cd "$tool" && ./bin/ZomboidDecompiler "$GAME_PATH" )
 
 produced="$(find "$tool" -type d -name output | sort | head -1 || true)"

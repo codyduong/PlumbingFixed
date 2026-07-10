@@ -6,10 +6,7 @@
       "./Umbrella/library/"
     ],
     "ignoreDir": [
-      "PlumbingFixed"
-    ],
-    "ignoreGlobs": [
-      "PlumbingFixed/**"
+      "./PlumbingFixed"
     ]
   },
   "diagnostics": {

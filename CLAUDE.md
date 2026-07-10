@@ -57,7 +57,7 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | `mise run bump 1.3.14` | Set `modversion` in both `mod.info` files |
 | `mise run package v1.3.14` | Validate versions + assemble `./PlumbingFixed` |
 | `mise run deploy` | Package + sync into the local Zomboid Workshop dir for testing |
-| `mise run publish "note"` | Upload to Steam Workshop via steamcmd (run it yourself; Steam Guard) |
+| `mise run publish <test\|prod> "note"` | Upload to Steam Workshop via steamcmd (required test/prod target; run it yourself; Steam Guard) |
 
 Each task has a **cross-platform** implementation — a POSIX `scripts/<name>.sh` (used on
 Unix via `run`) and a PowerShell `scripts/<name>.ps1` (used on Windows via `run_windows`) —
@@ -77,6 +77,12 @@ Mod content lives under `Contents/mods/PlumbingFixed/` with PZ's multi-build lay
 - `42/media/lua/...` — the real mod (Build 42).
 - `41/` — a **stub** (`mod.info` + `poster.png` only, no Lua) for B41 compatibility metadata.
 - `common/` — empty placeholder (`.gitkeep`).
+
+Steam Workshop page metadata is **source-controlled** under `workshop/`:
+`workshop/workshop.conf` (flat `key=value`: title/tags/visibility/ids/preview) and
+`workshop/description.bbcode` (the BBCode description, read verbatim). `scripts/publish-workshop.*`
+turn these into the steamcmd VDF. **steamcmd is the only publish path** — the in-game uploader
+(which read the now-removed `workshop.txt`) is no longer supported. See [docs/RELEASING.md](docs/RELEASING.md).
 
 Lua roots under `42/media/lua/`:
 
@@ -154,7 +160,7 @@ Keep these three aligned with the installed build. When the game updates, follow
 - **Fluid mixing:** plumbed barrels currently have all fluids converted to water on draw
   (`removeWaterTopDown` purifies tainted→water and pools everything). Storing non-water
   (gasoline/bleach) above a plumbed fixture is a known inadvertent behavior — see
-  `workshop.txt`.
+  `workshop/description.bbcode`.
 - **B41 stub ships 42 media:** `scripts/package.*` promote `42/media` into the mod root that
   the B41 `mod.info` points at, so a real B41 client would load B42 Lua (likely broken).
   Treated as an open decision (keep the stub vs drop B41), not changed yet.

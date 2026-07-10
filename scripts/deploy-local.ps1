@@ -19,8 +19,9 @@ $verLine = Get-Content $modInfo | Where-Object { $_ -match '^modversion=' } | Se
 $ver = ($verLine -split '=', 2)[1].Trim()
 Write-Host "Deploying $MOD_NAME v$ver" -ForegroundColor Cyan
 
-# Build (validates + assembles ./PlumbingFixed).
-& (Join-Path $PSScriptRoot "package.ps1") "v$ver"
+# Build (validates + assembles ./PlumbingFixed). Run as a child process so its exit code is
+# reliably in $LASTEXITCODE (calling with '&' leaves it $null on success — $null -ne 0 is true).
+pwsh -NoProfile -File (Join-Path $PSScriptRoot "package.ps1") "v$ver"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $target = Join-Path $ZomboidDir "Workshop\$MOD_NAME"

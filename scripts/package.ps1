@@ -50,7 +50,6 @@ if (Test-Path "./$MOD_NAME") { Remove-Item -Recurse -Force -Path "./$MOD_NAME" }
 New-Item -ItemType Directory -Force -Path "./$MOD_NAME" | Out-Null
 Copy-Item ./Contents -Recurse "./$MOD_NAME/Contents"
 Copy-Item ./preview.png "./$MOD_NAME/preview.png"
-Copy-Item ./workshop.txt "./$MOD_NAME/workshop.txt"
 # build 41 compat: promote 41/mod.info + poster and 42/media to the mod root
 Copy-Item "./Contents/mods/$MOD_NAME/41/*" -Recurse "./$MOD_NAME/Contents/mods/$MOD_NAME/"
 Copy-Item "./Contents/mods/$MOD_NAME/42/media" -Recurse "./$MOD_NAME/Contents/mods/$MOD_NAME/"

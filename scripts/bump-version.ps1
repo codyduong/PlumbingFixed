@@ -2,8 +2,8 @@
 # Set the mod's version (modversion) in every mod.info so the two copies never drift.
 # This is the mod's OWN semver (e.g. 1.3.14) and must equal the release git tag (v1.3.14) —
 # scripts/package.* enforce that. It is NOT the targeted PZ build (e.g. "B42.15"); that
-# marker lives in 42/mod.info `name=` and workshop.txt and is changed only when retargeting
-# a new game build — see docs/UPDATING-PZ.md.
+# marker lives in 42/mod.info `name=` and workshop/workshop.conf and is changed only when
+# retargeting a new game build — see docs/UPDATING-PZ.md.
 #
 # Usage: mise run bump 1.3.14   (or: pwsh -NoProfile -File scripts/bump-version.ps1 1.3.14)
 
