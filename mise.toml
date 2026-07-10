@@ -72,3 +72,13 @@ arg "[changenote]" help="Workshop changenote for this update" default=""
 '''
 run = 'bash scripts/publish-workshop.sh "${usage_target}" "${usage_changenote}"'
 run_windows = '& scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote'
+
+[tasks.vanilla-extract]
+description = "Extract overridden vanilla fns into vendor/pz/<VERSION>/ (baseline for 3-way merges)"
+run = "bash scripts/vanilla-extract.sh"
+run_windows = "& scripts/vanilla-extract.ps1"
+
+[tasks.vanilla-diff]
+description = "Show how installed vanilla drifted from the committed baseline (overridden fns)"
+run = "bash scripts/vanilla-diff.sh"
+run_windows = "& scripts/vanilla-diff.ps1"

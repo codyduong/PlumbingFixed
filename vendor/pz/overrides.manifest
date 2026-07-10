@@ -1,0 +1,5 @@
+# Which vanilla functions PlumbingFixed overrides — the source of truth for the baseline.
+# Format (TAB-separated): <vanilla path under media/lua>\t<space-separated function names>
+# Regenerate the baseline from the installed game with `mise run vanilla-extract`.
+shared/TimedActions/ISTakeWaterAction.lua	isValid updateUse new
+shared/TimedActions/ISWashClothing.lua	isValid complete

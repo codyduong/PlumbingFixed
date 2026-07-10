@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Vanilla baseline + extractor output must stay LF so the sh/ps1 twins produce an identical
+# committed snapshot (vendor/pz/<VERSION>/…) regardless of platform.
+vendor/** text eol=lf
