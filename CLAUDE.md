@@ -7,7 +7,8 @@ wash/drink/fill context menus working against the pooled supply.
 
 This file is the always-read entry point. Deeper detail lives in [`docs/`](docs/):
 [ARCHITECTURE](docs/ARCHITECTURE.md) · [TESTING](docs/TESTING.md) ·
-[RELEASING](docs/RELEASING.md) · [UPDATING-PZ](docs/UPDATING-PZ.md).
+[RELEASING](docs/RELEASING.md) · [UPDATING-PZ](docs/UPDATING-PZ.md) ·
+[LESSONS-LEARNED](docs/LESSONS-LEARNED.md).
 
 ---
 
@@ -66,8 +67,11 @@ Task arguments are declared with mise's `usage` spec, so `mise run bump --help` 
 `emmylua_check`/`stylua` must be on PATH (that's what `mise install` guarantees).
 
 **Secrets / local overrides:** `cp mise.local.toml.example mise.local.toml` and set
-`STEAM_USER` (and optional `PZ_HOME`, `ZOMBOID_DIR`, item ids). `mise.local.toml` is
-git-ignored and auto-loaded with higher precedence; its `[env]` feeds `mise run publish`.
+`STEAM_USERNAME` + `STEAM_PASSWORD` (and optional `PZ_HOME`, `ZOMBOID_DIR`, item ids).
+`mise.local.toml` is git-ignored and auto-loaded with higher precedence; its `[env]` feeds
+`mise run publish`. **`STEAM_PASSWORD` is age-encrypted and mise decrypts it transparently —
+never decrypt, print, or trial-and-error it, and move `mise.local.toml` out of the repo tree
+before agent-driven mise work.** See [docs/LESSONS-LEARNED.md](docs/LESSONS-LEARNED.md).
 
 ---
 

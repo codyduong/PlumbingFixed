@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./mise.local.toml)",
+      "Read(./mise.local.toml.*)",
+      "Read(//c/Users/duong/PlumbingFixed/mise.local.toml)",
+      "Read(//c/Users/duong/mise.local.toml.PlumbingFixed.bak)",
+      "Read(//c/Users/duong/.config/mise/age.txt)",
+      "Read(~/.config/mise/age.txt)",
+      "Bash(mise env)",
+      "Bash(mise env *)",
+      "PowerShell(mise env)",
+      "PowerShell(mise env *)"
+    ]
+  }
+}
