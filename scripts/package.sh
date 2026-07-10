@@ -1,6 +1,13 @@
 #!/bin/bash
+# SIBLING SCRIPT: scripts/package.ps1 is the Windows twin. Keep the version validation and
+# the build/copy steps IDENTICAL in both — releases (CI), deploy, and publish all build
+# through package, so any drift here ships a broken layout. See docs/RELEASING.md.
 
 set -e
+
+# Anchor to repo root so the relative paths below work regardless of caller cwd
+# (matches package.ps1's Set-Location behavior).
+cd "$(dirname "$0")/.."
 
 MOD_NAME="PlumbingFixed"
 INPUT_TAG="$1"

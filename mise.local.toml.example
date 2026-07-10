@@ -1,0 +1,21 @@
+# Local, machine-specific mise config — secrets & overrides for publishing.
+#
+#   cp mise.local.toml.example mise.local.toml   # then edit
+#
+# mise auto-loads mise.local.toml with HIGHER precedence than mise.toml, and it is
+# git-ignored (see .gitignore) so your credentials never get committed. These values are
+# exported as environment variables and picked up by `mise run publish`
+# (scripts/publish-workshop.*).
+
+[env]
+# Steam account used to upload the Workshop item. steamcmd still prompts for the
+# password + Steam Guard code interactively — only the username lives here.
+STEAM_USER = "your_steam_username"
+
+# Optional overrides (defaults shown) — only needed if you fork the mod / item:
+# PF_PUBLISHED_FILE_ID = "3626008449"   # the Steam Workshop item id to update
+# PF_APPID = "108600"                   # Project Zomboid's Steam app id
+
+# Optional: point the tooling at a non-default install / data dir.
+# PZ_HOME = "F:/steamlibrary/steamapps/common/ProjectZomboid"
+# ZOMBOID_DIR = "C:/Users/you/Zomboid"

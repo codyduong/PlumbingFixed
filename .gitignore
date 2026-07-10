@@ -1,1 +1,10 @@
 PlumbingFixed/**/*
+
+# Decompiled game source (analysis only, produced by scripts/decompile.ps1)
+/.decompiled/
+# Downloaded dev tools (e.g. Zomboid Decompiler)
+/.tools/
+# Steam Workshop publish scratch (generated VDF, steamcmd logs)
+/.publish/
+# mise local, machine-specific overrides
+mise.local.toml
