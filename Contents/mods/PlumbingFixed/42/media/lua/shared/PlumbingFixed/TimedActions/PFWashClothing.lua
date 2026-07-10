@@ -2,7 +2,7 @@ require("lua/shared/TimedActions/ISWashClothing")
 require("PlumbingFixed/utils")
 
 ---@class PFWashClothing : ISWashClothing
-local PFWashClothing = ISWashClothing
+local _PFWashClothing = ISWashClothing
 
 local original = {
   isValid = ISWashClothing.isValid,
@@ -10,7 +10,11 @@ local original = {
 }
 
 function ISWashClothing:isValid()
-  if not isPlumbed(self.sink) then
+  -- Server-run timed action: getUsesExternalWaterSource() is the authoritative, synced
+  -- plumbing flag (persisted + network-synced per IsoObject.java). isPlumbed() folds in a
+  -- client-only transient (hasExternalWaterSource) and a modData hack, so it's wrong here.
+  -- Matches PFTakeWaterAction; see the golden rule in CLAUDE.md.
+  if not self.sink:getUsesExternalWaterSource() then
     return original.isValid(self)
   end
 
@@ -25,7 +29,7 @@ function ISWashClothing:isValid()
 end
 
 function ISWashClothing:complete()
-  if not isPlumbed(self.sink) then
+  if not self.sink:getUsesExternalWaterSource() then
     return original.complete(self)
   end
 
@@ -34,6 +38,7 @@ function ISWashClothing:complete()
   local isRemoved = false
   if instanceof(item, "Clothing") or instanceof(item, "InventoryContainer") then
     local coveredParts = BloodClothingType.getCoveredParts(item:getBloodClothingType())
+    ---@diagnostic disable-next-line: unnecessary-if
     if coveredParts then
       for j = 0, coveredParts:size() - 1 do
         if self.noSoap == false then
@@ -44,9 +49,12 @@ function ISWashClothing:complete()
       end
     end
     if instanceof(item, "Clothing") then
+      ---@diagnostic disable-next-line: undefined-field
       item:setWetness(100)
+      ---@diagnostic disable-next-line: undefined-field
       item:setDirtiness(0)
     end
+  ---@diagnostic disable-next-line: unnecessary-if
   elseif item:getItemAfterCleaning() then
     isRemoved = true
     local newItemType = item:getItemAfterCleaning()

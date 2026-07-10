@@ -139,7 +139,7 @@ function removeWaterTopDown(waterObject, amount)
     local diff = topAmt - nextAmt
     local totalAvailableInLayer = diff * count
 
-    local extractionStep = 0
+    local extractionStep = 0.0
     if totalAvailableInLayer > remaining then
       -- We only need a fraction of this gap
       extractionStep = remaining / count
@@ -157,15 +157,16 @@ function removeWaterTopDown(waterObject, amount)
   end
 
   local completeMixed = FluidContainer:CreateContainer()
-  for _, item in ipairs(list) do
+  for i = 1, #list do
+    local item = list[i]
     local original = getWaterAmount(item.obj)
     local toRemove = original - item.amt
     if toRemove > 0 then
       -- purify only tainted water
       local mixed = item.obj:moveFluidToTemporaryContainer(toRemove)
       local allFluids = Fluid.getAllFluids()
-      for i = 0, allFluids:size() - 1 do
-        local fluid = allFluids:get(i)
+      for j = 0, allFluids:size() - 1 do
+        local fluid = allFluids:get(j)
 
         local specificFluidAmount = mixed:getSpecificFluidAmount(fluid)
         if fluid == Fluid.TaintedWater then
@@ -179,9 +180,9 @@ function removeWaterTopDown(waterObject, amount)
       -- local container = item.obj:moveFluidToTemporaryContainer(toRemove)
       -- FluidContainer.DisposeContainer(container)
 
-      --- @param waterObj IsoObject
-      --- @param removeAmt number
-      --- @param fluid Fluid
+      -- --- @param waterObj IsoObject
+      -- --- @param removeAmt number
+      -- --- @param fluid Fluid
       -- local function removeFluidType(waterObj, removeAmt, fluid)
       --   if removeAmt == 0 then
       --     return 0

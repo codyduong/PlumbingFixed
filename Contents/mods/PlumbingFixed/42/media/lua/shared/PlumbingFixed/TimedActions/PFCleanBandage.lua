@@ -1,69 +1,49 @@
--- require("lua/shared/TimedActions/ISCleanBandage")
--- require("PlumbingFixed/utils")
+require("lua/shared/TimedActions/ISCleanBandage")
+require("PlumbingFixed/utils")
 
--- ---@class PFCleanBandage : ISCleanBandage
--- local PFCleanBandage = ISCleanBandage
+---@class PFCleanBandage : ISCleanBandage
+local _PFCleanBandage = ISCleanBandage
 
--- local original = {
---   complete = ISCleanBandage.complete,
--- }
+local original = {
+  isValid = ISCleanBandage.isValid,
+  complete = ISCleanBandage.complete,
+}
 
--- function ISCleanBandage:isValid()
---   if self.item:getContainer() ~= self.character:getInventory() then
---     return false
---   end
+function ISCleanBandage:isValid()
+  if self.item:getContainer() ~= self.character:getInventory() then
+    return false
+  end
+  -- getUsesExternalWaterSource() is the server-authoritative synced plumbing flag; see the
+  -- golden rule in CLAUDE.md and PFTakeWaterAction.
+  if not self.waterObject:getUsesExternalWaterSource() then
+    return original.isValid(self)
+  end
+  return getPlumbedWaterAmount(self.waterObject) > 0
+end
 
---   return self.waterObject:hasWater() or getPlumbedHasWater(self.waterObject)
--- end
+function ISCleanBandage:complete()
+  if not self.waterObject:getUsesExternalWaterSource() then
+    return original.complete(self)
+  end
 
--- function ISCleanBandage:complete()
---   local usePlumbingFixed = self.waterObject:hasExternalWaterSource() or getPlumbedHasWater(self.waterObject)
+  -- Item swap (mirrors vanilla ISCleanBandage:complete).
+  local primary = self.character:isPrimaryHandItem(self.item)
+  local secondary = self.character:isSecondaryHandItem(self.item)
+  self.character:getInventory():Remove(self.item)
+  local item = self.character:getInventory():AddItem(self.result)
+  sendReplaceItemInContainer(self.character:getInventory(), self.item, item)
+  if primary then
+    self.character:setPrimaryHandItem(item)
+  end
+  if secondary then
+    self.character:setSecondaryHandItem(item)
+  end
+  sendEquip(self.character)
 
---   --- @cast f IsoObject
---   if not usePlumbingFixed then
---     return original.complete(self)
---   end
+  -- Vanilla consumes 1 unit via waterObject:useFluid(1), which drains the single external
+  -- source; draw it evenly from the pooled 3x3 instead. removeWaterTopDown returns a
+  -- Java-managed container we must dispose (its side effect is the pooled drain).
+  FluidContainer.DisposeContainer(removeWaterTopDown(self.waterObject, 1))
 
---   local primary = self.character:isPrimaryHandItem(self.item)
---   local secondary = self.character:isSecondaryHandItem(self.item)
---   self.character:getInventory():Remove(self.item)
---   local item = self.character:getInventory():AddItem(self.result)
---   sendReplaceItemInContainer(self.character:getInventory(), self.item, item)
---   if primary then
---     self.character:setPrimaryHandItem(item)
---   end
---   if secondary then
---     self.character:setSecondaryHandItem(item)
---   end
---   sendEquip(self.character)
-
---   local maxWaterObj = self.waterObject
---   --- @type table<number, IsoObject>
---   local sharedMaxWaterObj = {}
---   for _, src in ipairs(getPlumbedSources(self.waterObject)) do
---     local compareWater = src:getFluidAmount()
---     if maxWaterObj:getFluidAmount() == src:getFluidAmount() then
---       table.insert(sharedMaxWaterObj, src)
---     elseif maxWaterObj:getFluidAmount() < src:getFluidAmount() then
---       maxWaterObj = src
---       sharedMaxWaterObj = {}
---     end
---   end
-
---   local sum = 0
---   for _, src in ipairs(sharedMaxWaterObj) do
---     sum = sum + src:getFluidAmount()
---   end
---   if sum <= 1 then
---     return false
---   end
-
---   local divisor = #sharedMaxWaterObj
---   local removeAmt = 1.0 / divisor
---   for _, src in ipairs(sharedMaxWaterObj) do
---     local container = src:moveFluidToTemporaryContainer(removeAmt)
---     FluidContainer.DisposeContainer(container)
---   end
-
---   return true
--- end
+  return true
+end

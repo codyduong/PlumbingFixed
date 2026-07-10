@@ -3,3 +3,4 @@
 # Regenerate the baseline from the installed game with `mise run vanilla-extract`.
 shared/TimedActions/ISTakeWaterAction.lua	isValid updateUse new
 shared/TimedActions/ISWashClothing.lua	isValid complete
+shared/TimedActions/ISCleanBandage.lua	isValid complete

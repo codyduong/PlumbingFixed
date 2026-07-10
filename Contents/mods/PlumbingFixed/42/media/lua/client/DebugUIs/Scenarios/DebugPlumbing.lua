@@ -74,6 +74,7 @@ local function CreateBarrel(sq, spriteName, health)
   --javaObject:setTaintedWater(waterAmount > 0 and sq:isOutside())
 
   local info = SpriteConfigManager.getObjectInfoFromSprite(spriteName)
+  ---@diagnostic disable-next-line: unnecessary-if
   if info and info:getScript() and info:getScript():getParent() then
     local gameEntityScript = info:getScript():getParent()
     local isFirstTimeCreated = true
@@ -247,7 +248,7 @@ debugScenarios.DebugPlumbing = {
     mixedBarrelFC:addFluid(Fluid.Bleach, 10)
     centerSq = getCell():getGridSquare(8355, 7185, 0)
     centerSq:addTileObject("fixtures_sinks_01_32")
-    sink = centerSq:getObjectWithSprite("fixtures_sinks_01_32")
+    local _sink = centerSq:getObjectWithSprite("fixtures_sinks_01_32")
     stairs:create(8354, 7189, 0, true, "carpentry_02_96")
   end,
 }

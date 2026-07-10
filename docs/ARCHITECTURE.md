@@ -32,13 +32,28 @@ is **not** plumbed, so unplumbed/vanilla flows are untouched.
 |----------------|---------------|-------|
 | `ISTakeWaterAction:{isValid,updateUse,transferFromMax,new}` | `shared/.../PFTakeWaterAction.lua` | drink & fill-container from the pool |
 | `ISWashClothing:{isValid,complete}` | `shared/.../PFWashClothing.lua` | wash consumes from the pool |
-| `ISWorldObjectContextMenu.{doDrinkWaterMenu,doWashClothingMenu,doFluidContainerMenu,onDrink,onTakeWater,toggleComboWasherDryer,formatWaterAmount}` + `Events.OnFillWorldObjectContextMenu` | `client/.../PFWorldObjectContextMenu.lua` | rebuilds the menus using pooled totals |
+| `ISCleanBandage:{isValid,complete}` | `shared/.../PFCleanBandage.lua` | clean-bandage draw from the pool |
+| the fixture water menu (Drink / Fill / Wash / Clean Bandage) | *(none — native Java)* | B42.19 builds this in `zombie/iso/ISWorldObjectContextMenuLogic`, gating on the same 3×3-above scan we use and binding each option to the Lua handlers → our overridden timed actions. No menu *builder* override. |
+| Drink/Wash figures + Wash grey-out via `Events.OnFillWorldObjectContextMenu` | `client/ISUI/PFPooledMenuFixups.lua` | post-processes the Java menu in place to show pooled water and gate Wash on the pool |
 | debug inspector via `Events.OnPreFillWorldObjectContextMenu` | `client/DebugUIs/PFPlumbedConnectedMenu.lua` | shows per-barrel info (debug mode only) |
 | `debugScenarios.DebugPlumbing` | `client/DebugUIs/Scenarios/DebugPlumbing.lua` | builds a test world |
+| (client bootstrap) | `client/PlumbingFixedClient.lua` | `require`s the shared timed actions client-side |
 | (server bootstrap) | `server/PlumbingFixedServer.lua` | `require`s the shared timed actions server-side |
 
-`shared/.../PFCleanBandage.lua` is **entirely commented out** (legacy/disabled). The
-clean-bandage menu code in `PFWorldObjectContextMenu.lua` is likewise commented out.
+`PFCleanBandage` pools the clean-bandage draw like the other actions. Caveat: the vanilla
+*fixture* Clean-Bandage menu looks broken in B42.19 — `CleanBandages` and its `onClean*`
+handlers are **file-local** in `ISWorldObjectContextMenu.lua`, so Java's
+`getFunctionObject("CleanBandages.*")` / `callLuaClass("CleanBandages", …)` resolve to nil (they
+look up the global env). Our override is still correct for any caller that reaches
+`ISCleanBandage`; we don't try to repair the upstream menu, and its batch count is left alone.
+
+Because the menu is native Java that dispatches to Lua **by name at call time**
+(`LuaManager.getFunctionObject`, `LuaHelpers.callLuaClass`, resolved against the global env),
+the mod loads its timed-action overrides on each side and the engine picks them up — hence there
+is no menu *builder* file, just the client/server bootstraps above. The Java menu still gates
+and labels from the fixture's single found barrel, so **`PFPooledMenuFixups.lua`** post-processes
+the built menu to restore pooled Drink/Wash water figures and the Wash availability grey-out.
+Remaining known gap: the (vanilla-broken) Clean-Bandage batch count.
 
 ## Core utilities (`shared/PlumbingFixed/utils.lua`)
 
@@ -50,11 +65,11 @@ clean-bandage menu code in `PFWorldObjectContextMenu.lua` is likewise commented 
 - `getPlumbedWaterAmount` / `getPlumbedWaterCapacity` — pooled totals across all sources
   (fall back to the fixture itself when nothing is plumbed).
 - `findWaterObject(worldObjects)` — from a right-clicked square, returns the plumbed fixture
-  that actually has sources (drives the context-menu hook).
+  that actually has sources (used by the debug inspector menu).
 - `isPlumbed(obj)` — `hasExternalWaterSource()` OR `getUsesExternalWaterSource()` OR
-  `modData.canBeWaterPiped == false`. **See the golden rule in [CLAUDE.md](../CLAUDE.md):**
-  which term is authoritative depends on the calling side; this predicate is under active
-  review.
+  `modData.canBeWaterPiped == false`. Used only by the shared scan here; the timed actions gate
+  on `getUsesExternalWaterSource()` directly (server-authoritative). **See the golden rule in
+  [CLAUDE.md](../CLAUDE.md).**
 
 ## The distribution algorithm — `removeWaterTopDown(waterObject, amount)`
 
@@ -77,9 +92,10 @@ temporaries — these are Java-managed and leak silently otherwise.
 
 ## Client ↔ server data flow (why side matters)
 
-`Events.OnFillWorldObjectContextMenu` builds the menu on the **client**. Selecting an option
-enqueues an `ISTakeWaterAction`/`ISWashClothing`, whose `isValid` / `updateUse` / `complete`
-can run on the **server** in MP. So a value read while building the menu (client) may differ
+Native Java (`ISWorldObjectContextMenuLogic`) builds the fixture menu on the **client** and
+binds each option to our Lua handlers. Selecting one enqueues an
+`ISTakeWaterAction`/`ISWashClothing`, whose `isValid` / `updateUse` / `complete` can run on the
+**server** in MP. So a value read while building the menu (client) may differ
 from the same read inside the action (server) — this is exactly why
 `hasExternalWaterSource()` (unreliable server-side) was swapped for
 `getUsesExternalWaterSource()` in `updateUse`. Always confirm which side a code path runs on

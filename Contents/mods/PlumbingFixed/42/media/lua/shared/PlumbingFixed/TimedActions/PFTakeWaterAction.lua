@@ -4,10 +4,10 @@ require("lua/shared/TimedActions/ISTakeWaterAction")
 require("PlumbingFixed/utils")
 
 ---@class PFTakeWaterAction : ISTakeWaterAction
-local PFTakeWaterAction = ISTakeWaterAction
+local _PFTakeWaterAction = ISTakeWaterAction
 
 local original = {
-  -- isValid = ISTakeWaterAction.isValid,
+  isValid = ISTakeWaterAction.isValid,
   updateUse = ISTakeWaterAction.updateUse,
   -- start = ISTakeWaterAction.start,
   getDuration = ISTakeWaterAction.getDuration,
@@ -22,15 +22,16 @@ function ISTakeWaterAction:isValid()
     return false
   end
 
-  if not isPlumbed(self.waterObject) then
-    return self.waterObject:hasFluid()
+  -- Not plumbed: defer to vanilla so we auto-track upstream changes (B42.19 added a
+  -- hasFullInventory() guard here). getUsesExternalWaterSource() is the server-authoritative
+  -- plumbing flag (persisted to save bits + network-synced, per IsoObject.java);
+  -- hasExternalWaterSource() is a client-only transient and reads false on the server.
+  -- See the golden rule in CLAUDE.md.
+  if not self.waterObject:getUsesExternalWaterSource() then
+    return original.isValid(self)
   end
 
-  DebugLog.log(
-    DebugType.Mod,
-    "PlumbingFixed (PFTakeWaterAction:isValid) last result " .. tostring(getPlumbedWaterAmount(self.waterObject))
-  )
-  return getPlumbedWaterAmount(self.waterObject) > 0
+  return getPlumbedWaterAmount(self.waterObject) > 0 and not self.character:hasFullInventory()
 end
 
 ---@param targetDelta number
@@ -55,8 +56,9 @@ function ISTakeWaterAction:updateUse(targetDelta)
   if self.waterUnit and self.waterUnit > 0 then
     local usedTarget = self.waterUnit * targetDelta
 
-    local currentUsedAmount = 0
+    local currentUsedAmount = 0.0
     if self.item ~= nil then
+      ---@diagnostic disable-next-line: unnecessary-if
       if self.item:getFluidContainer() then
         currentUsedAmount = self.item:getFluidContainer():getAmount()
       end
@@ -109,6 +111,10 @@ function ISTakeWaterAction:transferFromMax(_amount)
     self.character:DrinkFluid(fluidContainer, 1)
   end
   FluidContainer.DisposeContainer(fluidContainer)
+  -- removeWaterTopDown drains the barrels (its side effect); we discard the drawn
+  -- water and hand the character clean water above, so dispose the returned
+  -- container to avoid leaking the Java-managed FluidContainer.
+  FluidContainer.DisposeContainer(mixed)
 end
 
 ---@param character IsoPlayer
@@ -123,14 +129,14 @@ function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
   end
   DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:new) - using custom constructor")
 
-  ---@cast ISBaseTimedAction.new fun(character: IsoPlayer): PFTakeWaterAction
-  local o = ISBaseTimedAction.new(self, character)
+  local o = ISBaseTimedAction.new(self, character) --[[@as PFTakeWaterAction]]
   o.item = item
   o.waterObject = waterObject
   o.waterTaintedCL = waterTaintedCL
 
   local waterAvailable = getPlumbedWaterAmount(waterObject)
   if o.item ~= nil then
+    ---@diagnostic disable-next-line: unnecessary-if
     if o.item:getFluidContainer() then
       o.startUsedAmount = o.item:getFluidContainer():getAmount()
       o.endUsedAmount = o.item:getFluidContainer():getCapacity()

@@ -23,8 +23,9 @@ Real landmines already hit here:
   uses `getUsesExternalWaterSource()` instead (see `PFTakeWaterAction.lua:updateUse`).
 - `isPlumbed()` (our util) folds together `hasExternalWaterSource()` **OR**
   `getUsesExternalWaterSource()` **OR** `modData.canBeWaterPiped == false`. Which one is
-  correct depends on **which side the caller runs on** (client context menu vs server timed
-  action). There is an in-progress investigation here — see [KNOWN LANDMINES](#known-landmines).
+  correct depends on **which side the caller runs on**. This is now settled for the timed
+  actions — both gate on `getUsesExternalWaterSource()` (server-authoritative); `isPlumbed()`
+  remains only in the shared `utils.lua` scan. See [KNOWN LANDMINES](#known-landmines).
 
 **Before overriding or relying on any vanilla API, verify it three ways:**
 1. **Which vanilla dir defines the caller?** `client/` runs on the client, `server/` on the
@@ -95,7 +96,7 @@ Lua roots under `42/media/lua/`:
 | `shared/PlumbingFixed/utils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount`, `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
 | `shared/PlumbingFixed/TimedActions/PFTakeWaterAction.lua` | shared | `ISTakeWaterAction:{isValid,updateUse,transferFromMax,new}` |
 | `shared/PlumbingFixed/TimedActions/PFWashClothing.lua` | shared | `ISWashClothing:{isValid,complete}` |
-| `client/ISUI/PFWorldObjectContextMenu.lua` | client | `ISWorldObjectContextMenu.*` menu builders + `Events.OnFillWorldObjectContextMenu` |
+| `client/PlumbingFixedClient.lua` | client | `require`s the shared timed actions on the client (B42.19 builds the fixture menu in native Java, so there is **no** menu override) |
 | `client/DebugUIs/Scenarios/DebugPlumbing.lua` | client | the `DebugPlumbing` test scenario (barrels + plumbed sink) |
 | `server/PlumbingFixedServer.lua` | server | `require`s the shared timed actions on the server |
 
@@ -156,11 +157,14 @@ Keep these three aligned with the installed build. When the game updates, follow
 
 ## Known landmines
 
-- **`hasExternalWaterSource()` vs `getUsesExternalWaterSource()` vs `isPlumbed()`** — an
-  active, unresolved investigation (see the current uncommitted diff in
-  `PFTakeWaterAction.lua` and `PFWorldObjectContextMenu.lua`). Do **not** finalize a
-  predicate swap without verifying authority per side (§Golden rule). This is deferred code
-  work, not a scaffolding change.
+- **`hasExternalWaterSource()` vs `getUsesExternalWaterSource()` vs `isPlumbed()`** — resolved
+  for the timed actions: `PFTakeWaterAction` and `PFWashClothing` both gate on
+  `getUsesExternalWaterSource()`, the server-authoritative synced flag (per `IsoObject.java`:
+  persisted to save bits + network-synced). `hasExternalWaterSource()` is a client-only
+  transient that reads false on the server. `isPlumbed()` (which also folds in the
+  `canBeWaterPiped` modData hack) is still used by the shared `utils.lua` scan. As of B42.19
+  the fixture menu is native Java, so there is no client-side menu predicate left to reconcile.
+  Still verify authority per side (§Golden rule) before any future predicate change.
 - **Fluid mixing:** plumbed barrels currently have all fluids converted to water on draw
   (`removeWaterTopDown` purifies tainted→water and pools everything). Storing non-water
   (gasoline/bleach) above a plumbed fixture is a known inadvertent behavior — documented in the
