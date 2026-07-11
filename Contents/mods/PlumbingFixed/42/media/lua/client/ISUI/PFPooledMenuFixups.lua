@@ -27,7 +27,7 @@ local WATER_LABEL = getText("ContextMenu_WaterName")
 --- @param tt table
 local function markModified(tt)
   if getDebug() then
-    tt.description = tt.description .. " <BR> Modified by Plumbing Fixed"
+    tt.description = tt.description .. " <BR> DEBUG: Modified by Plumbing Fixed"
   end
 end
 
