@@ -1,5 +1,7 @@
 # Packaging staging area (scripts/package.*)
 /dist/
+# Ephemeral dedicated-server world/state (scripts/testhost.ps1; seed configs in testhost/)
+/.testhost/
 
 # Decompiled game source (analysis only, produced by scripts/decompile.ps1)
 /.decompiled/

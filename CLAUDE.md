@@ -58,7 +58,8 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | `mise run decompile` | Decompile the installed game into `.decompiled/` for analysis |
 | `mise run bump 1.3.14` | Set `modversion` in both `mod.info` files |
 | `mise run package v1.3.14` | Validate versions + assemble `dist/PlumbingFixed` |
-| `mise run deploy` | Package + sync into the local Zomboid Workshop dir for testing |
+| `mise run deploy <client\|server\|all>` | Package + sync (client=Workshop dev dir, server=`.testhost` mods dir) |
+| `mise run testhost [--reset]` | Ephemeral local dedicated server for MP testing (state in `.testhost/`) |
 | `mise run publish <test\|prod> "note"` | Upload to Steam Workshop via steamcmd (required test/prod target; run it yourself; Steam Guard) |
 
 Each task shells out to a PowerShell `scripts/<name>.ps1`, which you can also run directly
@@ -94,11 +95,17 @@ Lua roots under `42/media/lua/`:
 | File | Side | Overrides / provides |
 |------|------|----------------------|
 | `shared/PlumbingFixed/utils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount`, `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
+| `shared/PlumbingFixed/DebugRig.lua` | shared | `PFDebugRig`: buildable/clearable test rig (3×3 + 4 empty barrels + sink + stairs), reused by the scenario, the MP spawn command, and SP spawning |
 | `shared/PlumbingFixed/TimedActions/PFTakeWaterAction.lua` | shared | `ISTakeWaterAction:{isValid,updateUse,transferFromMax,new}` |
 | `shared/PlumbingFixed/TimedActions/PFWashClothing.lua` | shared | `ISWashClothing:{isValid,complete}` |
+| `shared/PlumbingFixed/TimedActions/PFCleanBandage.lua` | shared | `ISCleanBandage:{isValid,complete}` |
 | `client/PlumbingFixedClient.lua` | client | `require`s the shared timed actions on the client (B42.19 builds the fixture menu in native Java, so there is **no** menu override) |
-| `client/DebugUIs/Scenarios/DebugPlumbing.lua` | client | the `DebugPlumbing` test scenario (barrels + plumbed sink) |
-| `server/PlumbingFixedServer.lua` | server | `require`s the shared timed actions on the server |
+| `client/ISUI/PFPooledMenuFixups.lua` | client | `OnFillWorldObjectContextMenu` post-processor: rewrites Drink/Wash tooltips + Wash grey-out to pooled totals; debug-mode "Modified by Plumbing Fixed" marker |
+| `client/DebugUIs/PFPlumbedConnectedMenu.lua` | client | debug "Connected Sources" inspector + "Configure Barrel Fluids..." |
+| `client/DebugUIs/PFBarrelFluidWindow.lua` | client | per-barrel fluid editor window (debug; MP edits go through the server) |
+| `client/DebugUIs/PFTestRigMenu.lua` | client | mod option (PZAPI.ModOptions) + "Spawn PlumbingFixed Test Rig" debug context option |
+| `client/DebugUIs/Scenarios/DebugPlumbing.lua` | client | the `DebugPlumbing` test scenario (two rigs via `PFDebugRig` + loadout) |
+| `server/PlumbingFixedServer.lua` | server | `require`s the shared timed actions on the server; `OnClientCommand` handlers for rig spawn / barrel fluid edits (capability-gated) |
 
 **Override pattern** (used everywhere): `require("lua/.../ISFoo")` to load vanilla, capture
 originals in a local `original = { method = ISFoo.method }` table, then reassign

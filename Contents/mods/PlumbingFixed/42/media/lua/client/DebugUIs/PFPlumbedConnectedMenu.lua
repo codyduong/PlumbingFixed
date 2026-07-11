@@ -1,8 +1,10 @@
 require("PlumbingFixed/utils")
+require("DebugUIs/PFBarrelFluidWindow")
 
+--- @param player integer
 --- @param object IsoObject | nil
 --- @param context ISContextMenu
-local function showDebugMenu(object, context)
+local function showDebugMenu(player, object, context)
   if object == nil then
     return
   end
@@ -21,6 +23,9 @@ local function showDebugMenu(object, context)
   option.toolTip:setVisible(false)
   option.toolTip:setName("Connected Barrels Info:")
   local subMenu = context:getNew(context)
+  subMenu:addOption("Configure Barrel Fluids...", nil, function()
+    PFBarrelFluidWindow.open(player, plumbedObjects)
+  end)
   local waterTotal = 0.0
   for i, src in ipairs(plumbedObjects) do
     --- @cast src IsoObject
@@ -70,5 +75,5 @@ Events.OnPreFillWorldObjectContextMenu.Add(function(player, context, worldObject
     return
   end
   local waterObject = findWaterObject(worldObjects)
-  showDebugMenu(waterObject, context)
+  showDebugMenu(player, waterObject, context)
 end)
