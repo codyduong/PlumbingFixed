@@ -105,10 +105,13 @@ function PFBarrelFluidWindow:createChildren()
     row.combo = ISComboBox:new(x, controlY, 160, BTN_H)
     row.combo:initialise()
     self:addChild(row.combo)
+    -- Label with the internal type string, not getTranslatedName(): translations
+    -- intentionally alias fluids the player shouldn't distinguish (e.g. EN maps
+    -- Fluid_Name_TaintedWater to "Water"), which is ambiguous in a debug editor.
     local fluids = Fluid.getAllFluids()
     for j = 0, fluids:size() - 1 do
       local fluid = fluids:get(j)
-      row.combo:addOptionWithData(fluid:getTranslatedName(), fluid:getFluidTypeString())
+      row.combo:addOptionWithData(fluid:getFluidTypeString(), fluid:getFluidTypeString())
       if fluid == Fluid.TaintedWater then
         row.combo.selected = row.combo:getOptionCount()
       end
