@@ -4,14 +4,26 @@
     "deny": [
       "Read(./mise.local.toml)",
       "Read(./mise.local.toml.*)",
-      "Read(//c/Users/duong/PlumbingFixed/mise.local.toml)",
-      "Read(//c/Users/duong/mise.local.toml.PlumbingFixed.bak)",
-      "Read(//c/Users/duong/.config/mise/age.txt)",
       "Read(~/.config/mise/age.txt)",
       "Bash(mise env)",
       "Bash(mise env *)",
       "PowerShell(mise env)",
       "PowerShell(mise env *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty'); case \"$f\" in *.lua) out=$(mise run check 2>&1) || { printf '%s\\n' \"$out\" | tail -30 >&2; exit 2; } ;; esac",
+            "timeout": 120,
+            "statusMessage": "Lua checks (mise run check)"
+          }
+        ]
+      }
     ]
   }
 }

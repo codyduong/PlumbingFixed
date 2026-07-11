@@ -6,11 +6,15 @@
       "./Umbrella/library/"
     ],
     "ignoreDir": [
-      "./PlumbingFixed",
+      "dist",
+      ".testhost",
+      ".tools",
       "vendor"
     ],
     "ignoreGlobs": [
-      "./PlumbingFixed/**",
+      "dist/**",
+      ".testhost/**",
+      ".tools/**",
       "vendor/**"
     ]
   },
