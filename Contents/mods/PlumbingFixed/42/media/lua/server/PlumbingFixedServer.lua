@@ -37,6 +37,9 @@ Events.OnClientCommand.Add(function(module, command, player, args)
   if type(args.x) ~= "number" or type(args.y) ~= "number" or type(args.z) ~= "number" then
     return
   end
+  if (command == "addBarrelFluid" or command == "emptyBarrel") and player:getAccessLevel() ~= "admin" then
+    return
+  end
 
   if command == "spawnTestRig" then
     local barrels = PFDebugRig.build(math.floor(args.x), math.floor(args.y), math.floor(args.z), true)

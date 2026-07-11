@@ -25,20 +25,47 @@ PFBarrelFluidWindow = ISCollapsableWindow:derive("PFBarrelFluidWindow")
 --- Rows identify barrels by square coordinates, not object references: after a server
 --- edit the object is retransmitted and a captured reference would go stale.
 --- @param coords { x: integer, y: integer, z: integer }
---- @return FluidContainer?
-local function resolveFluidContainer(coords)
+--- @return IsoObject?
+local function resolveFluidObject(coords)
   local sq = getCell():getGridSquare(coords.x, coords.y, coords.z)
   if sq == nil then
     return nil
   end
   local objects = sq:getObjects()
   for i = 0, objects:size() - 1 do
-    local container = objects:get(i):getFluidContainer()
-    if container ~= nil then
-      return container
+    local obj = objects:get(i)
+    if obj:getFluidContainer() ~= nil then
+      return obj
     end
   end
   return nil
+end
+
+--- @param coords { x: integer, y: integer, z: integer }
+--- @return FluidContainer?
+local function resolveFluidContainer(coords)
+  local obj = resolveFluidObject(coords)
+  return obj ~= nil and obj:getFluidContainer() or nil
+end
+
+--- Live per-barrel debug block (the detail the old Connected Sources sub-menu listed one
+--- source at a time). Rebuilt each frame so it never goes stale after a server edit.
+--- @param coords { x: integer, y: integer, z: integer }
+--- @return string
+local function barrelDebugText(coords)
+  local obj = resolveFluidObject(coords)
+  if obj == nil then
+    return "No fluid object at x:" .. coords.x .. ", y:" .. coords.y .. ", z:" .. coords.z
+  end
+  local desc = ""
+  desc = desc .. "Fluid = " .. obj:getFluidAmount() .. "/" .. obj:getFluidCapacity() .. "\n"
+  desc = desc .. "Has Water = " .. tostring(obj:hasWater()) .. "\n"
+  desc = desc .. "Is Tainted = " .. tostring(obj:isTaintedWater()) .. "\n"
+  desc = desc .. "Coordinates = x:" .. coords.x .. ", y:" .. coords.y .. ", z:" .. coords.z .. "\n"
+  desc = desc .. "Custom Name = " .. tostring(obj:getProperty("CustomName")) .. "\n"
+  desc = desc .. "Name = " .. obj:getName() .. "\n"
+  desc = desc .. "Tile Name = " .. tostring(obj:getTileName()) .. "\n"
+  return desc
 end
 
 --- Open the editor for a list of fluid-holding world objects (rig barrels or any
@@ -81,6 +108,11 @@ function PFBarrelFluidWindow:createChildren()
   ISCollapsableWindow.createChildren(self)
   local top = self:titleBarHeight() + PAD
 
+  -- Fluid edits mutate server-authoritative world state, so restrict them to admins.
+  -- Debug mode alone (which gates the whole menu) is not enough. In SP there is no access
+  -- level, so allow it there. The server re-checks the same rule (PlumbingFixedServer.lua).
+  local canModify = not isClient() or getAccessLevel() == "admin"
+
   for i, coords in ipairs(self.barrelCoords) do
     local row = { coords = coords }
     local x = PAD
@@ -104,6 +136,7 @@ function PFBarrelFluidWindow:createChildren()
     local controlY = y + BTN_H + 2
     row.combo = ISComboBox:new(x, controlY, 160, BTN_H)
     row.combo:initialise()
+    row.combo:setEnabled(canModify)
     self:addChild(row.combo)
     -- Label with the internal type string, not getTranslatedName(): translations
     -- intentionally alias fluids the player shouldn't distinguish (e.g. EN maps
@@ -123,6 +156,7 @@ function PFBarrelFluidWindow:createChildren()
     row.amountBox:initialise()
     row.amountBox:instantiate()
     row.amountBox:setOnlyNumbers(true)
+    row.amountBox:setEditable(canModify)
     self:addChild(row.amountBox)
     x = x + 56 + PAD
 
@@ -130,6 +164,7 @@ function PFBarrelFluidWindow:createChildren()
       self:onAdd(row)
     end)
     row.addButton:initialise()
+    row.addButton:setEnable(canModify)
     self:addChild(row.addButton)
     x = x + 56 + PAD
 
@@ -137,6 +172,7 @@ function PFBarrelFluidWindow:createChildren()
       self:onEmpty(row)
     end)
     row.emptyButton:initialise()
+    row.emptyButton:setEnable(canModify)
     self:addChild(row.emptyButton)
     x = x + 56 + PAD
 
@@ -145,6 +181,12 @@ function PFBarrelFluidWindow:createChildren()
     row.fluidBar:initialise()
     row.fluidBar:setContainer(resolveFluidContainer(coords))
     self:addChild(row.fluidBar)
+
+    -- Info affordance carrying the full per-barrel debug block that the old sub-menu
+    -- listed one source at a time (tooltip refreshed live in prerender).
+    row.infoButton = ISButton:new(row.fluidBar.x - PAD - BTN_H, y, BTN_H, BTN_H, "?", nil, nil)
+    row.infoButton:initialise()
+    self:addChild(row.infoButton)
 
     table.insert(self.rows, row)
   end
@@ -156,6 +198,7 @@ function PFBarrelFluidWindow:prerender()
   -- object (and its container) under us.
   for _, row in ipairs(self.rows) do
     row.fluidBar:setContainer(resolveFluidContainer(row.coords))
+    row.infoButton:setTooltip(barrelDebugText(row.coords))
   end
 end
 
