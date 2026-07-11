@@ -16,10 +16,13 @@ $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
 # mise's cmd shell can pass the arg with surrounding quotes; normalize, then accept
-# "v1.3.14" or "1.3.14" and store the bare semver.
+# "v2.0.0-rc.1" or "2.0.0-rc.1" and store the bare semver.
 $ver = $Version.Trim('"').TrimStart('v', 'V')
-if ($ver -notmatch '^\d+\.\d+\.\d+$') {
-  Write-Host "ERROR: version must be X.Y.Z (got '$Version')." -ForegroundColor Red
+# Official SemVer 2.0.0 grammar (https://semver.org): X.Y.Z with optional -prerelease and
+# +build metadata. Accepts 1.3.14, 2.0.0-rc.1, 1.0.0-alpha.1+build.7, etc.
+$semver = '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+if ($ver -notmatch $semver) {
+  Write-Host "ERROR: version must be valid semver, e.g. X.Y.Z or X.Y.Z-rc.1 (got '$Version')." -ForegroundColor Red
   exit 1
 }
 
