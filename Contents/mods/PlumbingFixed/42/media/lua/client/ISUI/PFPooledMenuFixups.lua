@@ -21,6 +21,16 @@ require("PlumbingFixed/utils")
 
 local WATER_LABEL = getText("ContextMenu_WaterName")
 
+--- Debug-only sanity marker: lets us (and users running -debug) assert which options the
+--- mod rewrote. Invariant: unplumbed fixtures never get this marker because none of the
+--- fix* functions run for them.
+--- @param tt table
+local function markModified(tt)
+  if getDebug() then
+    tt.description = tt.description .. " <BR> Modified by Plumbing Fixed"
+  end
+end
+
 --- Drink tooltip: vanilla formatWaterAmount renders "<amount>L / <cap>L". Rewrite to pooled.
 --- @param option table
 --- @param pooled number
@@ -30,9 +40,13 @@ local function fixDrinkTooltip(option, pooled, pooledCap)
   if not tt or type(tt.description) ~= "string" then
     return
   end
-  tt.description = tt.description:gsub("[%d%.]+L%s*/%s*[%d%.]+L", function()
+  local replaced
+  tt.description, replaced = tt.description:gsub("[%d%.]+L%s*/%s*[%d%.]+L", function()
     return string.format("%.2fL / %.2fL", pooled, pooledCap)
   end, 1)
+  if replaced > 0 then
+    markModified(tt)
+  end
 end
 
 --- Wash tooltip: setWashClothingTooltip / the yourself option render "<Water>: <shown> / <req>"
@@ -63,6 +77,7 @@ local function fixWashOption(option, pooled, yourself)
   tt.description = tt.description:gsub(WATER_LABEL .. ":%s*[%d%.]+%s*/%s*[%d%.]+", function()
     return WATER_LABEL .. ": " .. shown .. " / " .. required
   end, 1)
+  markModified(tt)
 end
 
 --- Recursively walk a context menu and its submenus, patching pooled-water options in place.

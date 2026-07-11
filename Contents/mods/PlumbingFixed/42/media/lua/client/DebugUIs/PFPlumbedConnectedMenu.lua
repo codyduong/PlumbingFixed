@@ -11,6 +11,7 @@ local function showDebugMenu(object, context)
     return
   end
 
+  -- Umbrella types the return as nullable (the vanilla impl always returns an option).
   local option = context:addDebugOption(getText("ContextMenu_DebugConnectedSources"))
   if option == nil then
     return
@@ -58,7 +59,16 @@ local function showDebugMenu(object, context)
   context:addSubMenu(option, subMenu)
 end
 
-Events.OnPreFillWorldObjectContextMenu.Add(function(_player, context, worldObjects)
+Events.OnPreFillWorldObjectContextMenu.Add(function(player, context, worldObjects)
+  -- Same debug gate as vanilla DebugContextMenu.doDebugMenu: without it the option
+  -- shows for every player (addDebugOption itself does not check debug mode).
+  if isClient() then
+    if not getSpecificPlayer(player):getRole():hasCapability(Capability.UseDebugContextMenu) then
+      return
+    end
+  elseif not isDebugEnabled() then
+    return
+  end
   local waterObject = findWaterObject(worldObjects)
   showDebugMenu(waterObject, context)
 end)
