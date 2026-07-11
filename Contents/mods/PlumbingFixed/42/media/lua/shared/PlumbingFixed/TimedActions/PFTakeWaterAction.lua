@@ -66,7 +66,7 @@ end
 
 ---@param _amount number
 function ISTakeWaterAction:transferFromMax(_amount)
-  local mixed = removeWaterTopDown(self.waterObject, _amount)
+  local mixed = drawFromPool(self.waterObject, _amount)
   local fluidContainer = FluidContainer.CreateContainer()
   fluidContainer:canAddFluid(Fluid.Water)
   fluidContainer:setCapacity(10000)
@@ -100,7 +100,7 @@ function ISTakeWaterAction:transferFromMax(_amount)
     self.character:DrinkFluid(fluidContainer, 1)
   end
   FluidContainer.DisposeContainer(fluidContainer)
-  -- removeWaterTopDown drains the barrels (its side effect); we discard the drawn
+  -- drawFromPool drains the barrels (its side effect); we discard the drawn
   -- water and hand the character clean water above, so dispose the returned
   -- container to avoid leaking the Java-managed FluidContainer.
   FluidContainer.DisposeContainer(mixed)

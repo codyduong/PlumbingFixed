@@ -3,6 +3,7 @@ require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/TimedActions/PFWashClothing")
 require("PlumbingFixed/TimedActions/PFCleanBandage")
 require("PlumbingFixed/DebugRig")
+require("PlumbingFixed/PFWasherPooling")
 
 -- MP counterparts of the client debug tools (PFTestRigMenu / PFBarrelFluidWindow): the
 -- world is server-authoritative, so clients only send coordinates and the server
@@ -22,7 +23,8 @@ Events.OnClientCommand.Add(function(module, command, player, args)
   end
 
   if command == "spawnTestRig" then
-    local barrels = PFDebugRig.build(math.floor(args.x), math.floor(args.y), math.floor(args.z), true)
+    local fixture = args.fixture == "washer" and "washer" or "sink"
+    local barrels = PFDebugRig.build(math.floor(args.x), math.floor(args.y), math.floor(args.z), true, fixture)
     PFDebugRig.fillEqualTainted(barrels, 15)
   elseif command == "addBarrelFluid" then
     -- Resolve the same pooled source the client picked; only a container-backed source

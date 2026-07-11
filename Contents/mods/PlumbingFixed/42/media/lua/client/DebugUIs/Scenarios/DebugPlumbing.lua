@@ -16,6 +16,7 @@ debugScenarios.DebugPlumbing = {
     SandboxVars.WeaponLoot = 1
     SandboxVars.OtherLoot = 1
     SandboxVars.WaterShutModifier = -1
+    SandboxVars.ElecShutModifier = -1
     SandboxVars.FireSpread = false
     SandboxVars.Helicopter = 1
   end,
@@ -49,15 +50,13 @@ debugScenarios.DebugPlumbing = {
     chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
     chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
 
-    -- Plumbed rig: staggered tainted levels — exercises purification and makes the
-    -- equal-draw visible (fullest barrels should drain first).
+    -- Plumbed rig
     local barrels = PFDebugRig.build(8349, 7184, 0, true)
     for i, barrel in ipairs(barrels) do
       barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
     end
 
-    -- Unplumbed control rig: must behave pure vanilla. Fluid cocktail in the first
-    -- barrel (mixing regression), the other three stay empty.
+    -- Unplumbed control rig
     local controlBarrels = PFDebugRig.build(8354, 7184, 0, false)
     local mixedBarrel = controlBarrels[1]
     if mixedBarrel then
@@ -69,5 +68,18 @@ debugScenarios.DebugPlumbing = {
       mixedBarrelFC:addFluid(Fluid.Beer, 10)
       mixedBarrelFC:addFluid(Fluid.Bleach, 10)
     end
+
+    -- Plumbed washer rig
+    local washerBarrels = PFDebugRig.build(8359, 7184, 0, true, "washer")
+    for i, barrel in ipairs(washerBarrels) do
+      barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
+    end
+
+    -- onStart runs on the loading thread inside IsoWorld.init; generator state applied
+    -- there reads back unconfigured once gameplay begins. Re-apply after load completes
+    -- (OnGameStart fires in IngameState.enter, after loading finishes).
+    Events.OnGameStart.Add(function()
+      PFDebugRig.powerGenerator(8359, 7184, 0)
+    end)
   end,
 }

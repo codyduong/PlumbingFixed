@@ -34,25 +34,44 @@ if isDebugEnabled() then
     end
     local x, y, z = sq:getX(), sq:getY(), sq:getZ()
 
-    local option = context:addDebugOption("Spawn PlumbingFixed Test Rig", nil, function()
-      if isClient() then
-        sendClientCommand(playerObj, "PlumbingFixed", "spawnTestRig", { x = x, y = y, z = z })
-      else
-        local barrels = PFDebugRig.build(x, y, z, true)
-        PFDebugRig.fillEqualTainted(barrels, 15)
-      end
-    end)
-    if option ~= nil then
+    local parent = context:addDebugOption("Spawn PlumbingFixed Test Rig", nil, nil)
+    if parent == nil then
+      return
+    end
+    local subMenu = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, subMenu)
+
+    --- @param name string
+    --- @param fixture "sink" | "washer"
+    --- @param fixtureDesc string
+    local function addSpawnOption(name, fixture, fixtureDesc)
+      local option = subMenu:addOption(name, nil, function()
+        if isClient() then
+          sendClientCommand(playerObj, "PlumbingFixed", "spawnTestRig", { x = x, y = y, z = z, fixture = fixture })
+        else
+          local barrels = PFDebugRig.build(x, y, z, true, fixture)
+          PFDebugRig.fillEqualTainted(barrels, 15)
+        end
+      end)
       option.toolTip = ISToolTip:new()
       option.toolTip:initialise()
       option.toolTip:setVisible(false)
-      option.toolTip:setName("Spawn PlumbingFixed Test Rig")
+      option.toolTip:setName(name)
       option.toolTip.description = "Clears "
         .. PFDebugRig.WIDTH
         .. "x"
         .. PFDebugRig.DEPTH
         .. " tiles (two floors) at the clicked square and builds a plumbed test rig there"
-        .. " (4 barrels, 15L tainted water each; edit via Configure Barrel Fluids)."
+        .. " (4 barrels, 15L tainted water each; edit via Configure Barrel Fluids). "
+        .. fixtureDesc
     end
+
+    addSpawnOption("Sink Rig", "sink", "Fixture: sink.")
+    addSpawnOption(
+      "Washer Rig",
+      "washer",
+      "Fixture: clothing washer -- needs power and dirty clothing inside; a wash cycle"
+        .. " runs 90 in-game minutes at 1 unit/min (see docs/WASHER-POOLING.md)."
+    )
   end)
 end

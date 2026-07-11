@@ -83,7 +83,7 @@ function ISWashClothing:complete()
     self.character:setSecondaryHandItem(item)
   end
 
-  FluidContainer.DisposeContainer(removeWaterTopDown(self.sink, water))
+  FluidContainer.DisposeContainer(drawFromPool(self.sink, water))
 
   return true
 end

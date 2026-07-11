@@ -41,9 +41,9 @@ function ISCleanBandage:complete()
   sendEquip(self.character)
 
   -- Vanilla consumes 1 unit via waterObject:useFluid(1), which drains the single external
-  -- source; draw it evenly from the pooled 3x3 instead. removeWaterTopDown returns a
+  -- source; draw it evenly from the pooled 3x3 instead. drawFromPool returns a
   -- Java-managed container we must dispose (its side effect is the pooled drain).
-  FluidContainer.DisposeContainer(removeWaterTopDown(self.waterObject, 1))
+  FluidContainer.DisposeContainer(drawFromPool(self.waterObject, 1))
 
   return true
 end

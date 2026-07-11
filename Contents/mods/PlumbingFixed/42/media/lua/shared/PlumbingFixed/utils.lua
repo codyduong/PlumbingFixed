@@ -159,6 +159,16 @@ function removeWaterTopDown(waterObject, amount)
   return completeMixed
 end
 
+--- Single dispatch point for pooled draws (docs/WASHER-POOLING.md). The only policy today
+--- is Fullest-First (removeWaterTopDown, the v1 behavior); a future sandbox option will
+--- select between Fullest-First and Round-Robin here, applying to every consumer at once.
+--- @param waterObject IsoObject
+--- @param amount number
+--- @return FluidContainer container Java-managed; the caller must dispose it
+function drawFromPool(waterObject, amount)
+  return removeWaterTopDown(waterObject, amount)
+end
+
 --- @param x number
 --- @param y number
 --- @param z number
