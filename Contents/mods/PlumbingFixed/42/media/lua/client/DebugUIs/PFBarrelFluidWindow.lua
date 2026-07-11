@@ -25,14 +25,14 @@ PFBarrelFluidWindow = ISCollapsableWindow:derive("PFBarrelFluidWindow")
 
 --- Rows identify barrels by square coordinates, not object references: after a server
 --- edit the object is retransmitted and a captured reference would go stale, so every
---- lookup re-resolves through the shared findFluidObjectAt (utils.lua).
+--- lookup re-resolves through the shared findPlumbedSourceAt (utils.lua).
 
 --- Live per-barrel debug block (the detail the old Connected Sources sub-menu listed one
 --- source at a time). Rebuilt each frame so it never goes stale after a server edit.
 --- @param coords { x: integer, y: integer, z: integer }
 --- @return string
 local function barrelDebugText(coords)
-  local obj = findFluidObjectAt(coords.x, coords.y, coords.z)
+  local obj = findPlumbedSourceAt(coords.x, coords.y, coords.z)
   if obj == nil then
     return "No fluid object at x:" .. coords.x .. ", y:" .. coords.y .. ", z:" .. coords.z
   end
@@ -97,6 +97,11 @@ function PFBarrelFluidWindow:createChildren()
     local x = PAD
     local y = top + (i - 1) * ROW_H
 
+    -- Reserve sources (bathtubs) have no FluidContainer, so they are display-only: their
+    -- values still show (label + info tooltip) but the fluid edits have nothing to act on.
+    local source = findPlumbedSourceAt(coords.x, coords.y, coords.z)
+    local rowModifiable = canModify and source ~= nil and source:getFluidContainer() ~= nil
+
     row.label = ISLabel:new(
       x,
       y,
@@ -115,7 +120,7 @@ function PFBarrelFluidWindow:createChildren()
     local controlY = y + BTN_H + 2
     row.combo = ISComboBox:new(x, controlY, 160, BTN_H)
     row.combo:initialise()
-    row.combo:setEnabled(canModify)
+    row.combo:setEnabled(rowModifiable)
     self:addChild(row.combo)
     -- Label with the internal type string, not getTranslatedName(): translations
     -- intentionally alias fluids the player shouldn't distinguish (e.g. EN maps
@@ -135,7 +140,7 @@ function PFBarrelFluidWindow:createChildren()
     row.amountBox:initialise()
     row.amountBox:instantiate()
     row.amountBox:setOnlyNumbers(true)
-    row.amountBox:setEditable(canModify)
+    row.amountBox:setEditable(rowModifiable)
     self:addChild(row.amountBox)
     x = x + 56 + PAD
 
@@ -143,7 +148,7 @@ function PFBarrelFluidWindow:createChildren()
       self:onAdd(row)
     end)
     row.addButton:initialise()
-    row.addButton:setEnable(canModify)
+    row.addButton:setEnable(rowModifiable)
     self:addChild(row.addButton)
     x = x + 56 + PAD
 
@@ -151,15 +156,14 @@ function PFBarrelFluidWindow:createChildren()
       self:onEmpty(row)
     end)
     row.emptyButton:initialise()
-    row.emptyButton:setEnable(canModify)
+    row.emptyButton:setEnable(rowModifiable)
     self:addChild(row.emptyButton)
     x = x + 56 + PAD
 
     row.fluidBar =
       ISFluidBar:new(self.width - PAD - (BTN_H * 2), y, BTN_H * 2, ROW_H - PAD, getSpecificPlayer(self.playerNum))
     row.fluidBar:initialise()
-    local obj = findFluidObjectAt(coords.x, coords.y, coords.z)
-    row.fluidBar:setContainer(obj and obj:getFluidContainer() or nil)
+    row.fluidBar:setContainer(source and source:getFluidContainer() or nil)
     self:addChild(row.fluidBar)
 
     -- Info affordance carrying the full per-barrel debug block that the old sub-menu
@@ -177,8 +181,8 @@ function PFBarrelFluidWindow:prerender()
   -- Re-resolve every frame: server edits retransmit the barrel, which replaces the
   -- object (and its container) under us.
   for _, row in ipairs(self.rows) do
-    local obj = findFluidObjectAt(row.coords.x, row.coords.y, row.coords.z)
-    row.fluidBar:setContainer(obj and obj:getFluidContainer() or nil)
+    local source = findPlumbedSourceAt(row.coords.x, row.coords.y, row.coords.z)
+    row.fluidBar:setContainer(source and source:getFluidContainer() or nil)
     row.infoButton:setTooltip(barrelDebugText(row.coords))
   end
 end
@@ -199,9 +203,10 @@ function PFBarrelFluidWindow:onAdd(row)
       amount = amount,
     })
   else
-    local obj = findFluidObjectAt(row.coords.x, row.coords.y, row.coords.z)
-    if obj then
-      obj:getFluidContainer():addFluid(Fluid.Get(fluidType), amount)
+    local obj = findPlumbedSourceAt(row.coords.x, row.coords.y, row.coords.z)
+    local container = obj and obj:getFluidContainer()
+    if container then
+      container:addFluid(Fluid.Get(fluidType), amount)
     end
   end
 end
@@ -215,9 +220,10 @@ function PFBarrelFluidWindow:onEmpty(row)
       z = row.coords.z,
     })
   else
-    local obj = findFluidObjectAt(row.coords.x, row.coords.y, row.coords.z)
-    if obj then
-      obj:getFluidContainer():Empty()
+    local obj = findPlumbedSourceAt(row.coords.x, row.coords.y, row.coords.z)
+    local container = obj and obj:getFluidContainer()
+    if container then
+      container:Empty()
     end
   end
 end

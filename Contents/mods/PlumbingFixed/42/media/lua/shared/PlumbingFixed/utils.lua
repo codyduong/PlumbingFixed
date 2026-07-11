@@ -1,12 +1,3 @@
----@param maybe IsoObject?
----@return boolean
-function isPlayerConstructedFluidObj(maybe)
-  return obj ~= nil
-    and instanceof(obj, "IsoThumpable")
-    and obj:getFluidCapacity() > 0.0
-    and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
-end
-
 ---@param waterObject IsoObject
 ---@return IsoObject[]
 function getPlumbedSources(waterObject)
@@ -20,22 +11,11 @@ function getPlumbedSources(waterObject)
   end
 
   local x, y, z = sq:getX(), sq:getY(), sq:getZ()
-  local cell = waterObject:getCell()
-
-  -- Scan the 3x3 grid on the floor above (z + 1)
   for ix = -1, 1 do
     for iy = -1, 1 do
-      -- getGridSquare returns nil for unloaded squares
-      local topX, topY, topZ = x + ix, y + iy, z + 1
-      local topSq = cell:getGridSquare(x + ix, y + iy, z + 1)
-      if topSq ~= nil then
-        local fluidObject = findFluidObjectAt(x + ix, y + iy, z + 1)
-        local props = (fluidObject ~= nil) and fluidObject:getProperties() or nil
-        local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
-        local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
-        if hasWaterFlag or hasWaterPipedFlag or isPlayerConstructedFluidObj(fluidObject) then
-          table.insert(sources, obj)
-        end
+      local src = findPlumbedSourceAt(x + ix, y + iy, z + 1)
+      if src ~= nil then
+        table.insert(sources, src)
       end
     end
   end
@@ -78,9 +58,11 @@ end
 --- @return number
 function getWaterAmount(waterObject)
   local container = waterObject:getFluidContainer()
-  -- typically means its empty
   if container == nil then
-    return 0
+    -- No FluidContainer: a reserve-water source (waterPiped + waterAmount reserve, e.g. a
+    -- bathtub) exposes its water only through getFluidAmount(), which reads the reserve.
+    -- Returns 0 for a genuinely dry / non-source object.
+    return waterObject:getFluidAmount()
   end
 
   return container:getSpecificFluidAmount(Fluid.Water)
@@ -181,24 +163,12 @@ end
 --- @param y number
 --- @param z number
 --- @return IsoObject?
-function findFluidObjectAt(x, y, z)
+function findPlumbedSourceAt(x, y, z)
   local sq = getCell():getGridSquare(x, y, z)
   if sq == nil then
     return nil
   end
-  local objects = sq:getObjects()
-  for i = 0, objects:size() - 1 do
-    local obj = objects:get(i)
-    if
-      obj:getFluidContainer() ~= nil
-      and not instanceof(obj, "IsoWorldInventoryObject")
-      and not instanceof(obj, "IsoDeadBody")
-      and not instanceof(obj, "IsoMovingObject")
-    then
-      return obj
-    end
-  end
-  return nil
+  return IsoObject.FindWaterSourceOnSquare(sq)
 end
 
 --- returns the waterObject (that needs adjusting) if there is one
