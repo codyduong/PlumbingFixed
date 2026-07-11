@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
-# Validate mod.info versions against the release tag, then assemble ./PlumbingFixed in the
-# exact layout Steam Workshop / the game expects.
+# Validate mod.info versions against the release tag, then assemble dist/PlumbingFixed in
+# the exact layout Steam Workshop / the game expects. (The inner folder must be named
+# PlumbingFixed — that's what lands in the mods dir — but staging lives under dist/ so the
+# build output doesn't shadow the repo name at the root.)
 #
 # SIBLING SCRIPT: scripts/package.sh is the Unix/CI twin. Keep the version validation and
 # the build/copy steps IDENTICAL in both — any drift ships a broken layout. See docs/RELEASING.md.
@@ -46,14 +48,15 @@ foreach ($file in $infoFiles) {
 Write-Host "All mod.info versions match. Packaging..." -ForegroundColor Cyan
 
 # --- Assemble the build dir (identical structure to scripts/package.sh) -----------------
-if (Test-Path "./$MOD_NAME") { Remove-Item -Recurse -Force -Path "./$MOD_NAME" }
-New-Item -ItemType Directory -Force -Path "./$MOD_NAME" | Out-Null
-Copy-Item ./Contents -Recurse "./$MOD_NAME/Contents"
-Copy-Item ./preview.png "./$MOD_NAME/preview.png"
+$STAGE = "dist/$MOD_NAME"
+if (Test-Path $STAGE) { Remove-Item -Recurse -Force -Path $STAGE }
+New-Item -ItemType Directory -Force -Path $STAGE | Out-Null
+Copy-Item ./Contents -Recurse "$STAGE/Contents"
+Copy-Item ./preview.png "$STAGE/preview.png"
 # build 41 compat: promote 41/mod.info + poster and 42/media to the mod root
-Copy-Item "./Contents/mods/$MOD_NAME/41/*" -Recurse "./$MOD_NAME/Contents/mods/$MOD_NAME/"
-Copy-Item "./Contents/mods/$MOD_NAME/42/media" -Recurse "./$MOD_NAME/Contents/mods/$MOD_NAME/"
-Remove-Item "./$MOD_NAME/Contents/mods/$MOD_NAME/41" -Recurse -Force
-Remove-Item "./$MOD_NAME/Contents/mods/$MOD_NAME/common/.gitkeep" -Force
+Copy-Item "./Contents/mods/$MOD_NAME/41/*" -Recurse "$STAGE/Contents/mods/$MOD_NAME/"
+Copy-Item "./Contents/mods/$MOD_NAME/42/media" -Recurse "$STAGE/Contents/mods/$MOD_NAME/"
+Remove-Item "$STAGE/Contents/mods/$MOD_NAME/41" -Recurse -Force
+Remove-Item "$STAGE/Contents/mods/$MOD_NAME/common/.gitkeep" -Force
 
-Write-Host "Packaging complete for $MOD_NAME -> ./$MOD_NAME" -ForegroundColor Green
+Write-Host "Packaging complete for $MOD_NAME -> ./$STAGE" -ForegroundColor Green

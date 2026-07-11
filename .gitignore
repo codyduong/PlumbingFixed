@@ -1,4 +1,5 @@
-PlumbingFixed/**/*
+# Packaging staging area (scripts/package.*)
+/dist/
 
 # Decompiled game source (analysis only, produced by scripts/decompile.ps1)
 /.decompiled/

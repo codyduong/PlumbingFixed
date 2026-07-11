@@ -11,7 +11,7 @@
 #
 # Usage: pwsh -NoProfile -File scripts/publish-workshop.ps1 <test|prod> "changenote" [-DryRun]
 #    or: mise run publish test "Fixed multi-barrel draw on 42.19"   (verify, then: ... prod ...)
-#   -DryRun / --dry-run   build + print the VDF, don't upload (defaults target to test)
+#   -DryRun   build + print the VDF, don't upload (defaults target to test)
 
 param(
   [Parameter(Position = 0)]
@@ -19,22 +19,12 @@ param(
   [Parameter(Position = 1)]
   [string]$ChangeNote = "",
   [string]$SteamUser = $env:STEAM_USERNAME,
-  [switch]$DryRun,
-  [Parameter(ValueFromRemainingArguments = $true)]
-  [string[]]$ExtraArgs
+  [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 Set-Location (Split-Path -Parent $PSScriptRoot)
-
-# Accept the POSIX-style --dry-run alias for parity with the .sh twin.
-foreach ($a in $ExtraArgs) {
-  switch -Exact ($a) {
-    '--dry-run' { $DryRun = $true }
-    default { Write-Host "ERROR: unknown argument '$a'." -ForegroundColor Red; exit 2 }
-  }
-}
 
 $MOD_NAME = "PlumbingFixed"
 $APP_ID   = "108600"
@@ -80,7 +70,7 @@ $ver = ($verLine -split '=', 2)[1].Trim()
 pwsh -NoProfile -File (Join-Path $PSScriptRoot "package.ps1") "v$ver"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$contentFolder = (Resolve-Path "./$MOD_NAME").Path
+$contentFolder = (Resolve-Path "./dist/$MOD_NAME").Path
 $previewFile   = (Resolve-Path "./preview.png").Path
 if (-not $ChangeNote) { $ChangeNote = "v$ver" }
 
@@ -89,7 +79,6 @@ if (-not $ChangeNote) { $ChangeNote = "v$ver" }
 # The template's static values (title/description/tags) already carry their final form —
 # only the dynamic single-line substitutions need escaping, so newlines are never touched.
 function ConvertTo-VdfValue([string]$s) {
-  if ($null -eq $s) { return "" }
   ($s -replace '\\', '\\') -replace '"', '\"'
 }
 

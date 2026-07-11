@@ -70,9 +70,6 @@ local function CreateBarrel(sq, spriteName, health)
   javaObject:setBreakSound("BreakObject")
   javaObject:setSpecialTooltip(true)
 
-  --javaObject:setWaterAmount(waterAmount)
-  --javaObject:setTaintedWater(waterAmount > 0 and sq:isOutside())
-
   local info = SpriteConfigManager.getObjectInfoFromSprite(spriteName)
   ---@diagnostic disable-next-line: unnecessary-if
   if info and info:getScript() and info:getScript():getParent() then
@@ -211,14 +208,12 @@ debugScenarios.DebugPlumbing = {
     sink:getModData().canBeWaterPiped = false
     sink:setUsesExternalWaterSource(true)
     sink:transmitModData()
-    -- sink:sendObjectChange("usesExternalWaterSource", { value = true })
 
     for i, barrel in ipairs(barrels) do
       --- @cast barrel IsoThumpable
       barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
     end
 
-    -- local stair = fuckYouSq(8349, 7189, 0)
     local stairs = ISWoodenStairs:new(
       "carpentry_02_88",
       "carpentry_02_89",
@@ -229,10 +224,6 @@ debugScenarios.DebugPlumbing = {
       "carpentry_02_94",
       "carpentry_02_95"
     )
-    -- local sprite = "carpentry_02_88";
-    -- if north then
-    --   sprite = "carpentry_02_96";
-    -- end
     stairs:create(8349, 7189, 0, true, "carpentry_02_96")
 
     -- unplumbed
@@ -248,7 +239,6 @@ debugScenarios.DebugPlumbing = {
     mixedBarrelFC:addFluid(Fluid.Bleach, 10)
     centerSq = getCell():getGridSquare(8355, 7185, 0)
     centerSq:addTileObject("fixtures_sinks_01_32")
-    local _sink = centerSq:getObjectWithSprite("fixtures_sinks_01_32")
     stairs:create(8354, 7189, 0, true, "carpentry_02_96")
   end,
 }

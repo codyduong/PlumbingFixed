@@ -26,9 +26,9 @@ jobs:
 
       - name: Zip Artifact
         run: |
-          # Zip the folder created by package.sh
-          # Format: zip -r [output_filename] [target_folder]
-          zip -r PlumbingFixed.zip PlumbingFixed
+          # Zip the folder staged by package.sh; the archive root stays "PlumbingFixed"
+          # (the name the mods folder needs), only the staging parent is dist/.
+          cd dist && zip -r ../PlumbingFixed.zip PlumbingFixed
 
       - name: Create and Push Tag
         run: |

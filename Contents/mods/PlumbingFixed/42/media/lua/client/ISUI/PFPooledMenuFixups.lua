@@ -21,13 +21,6 @@ require("PlumbingFixed/utils")
 
 local WATER_LABEL = getText("ContextMenu_WaterName")
 
---- Escape Lua-pattern magic characters in a literal string.
---- @param s string
---- @return string
-local function escapePattern(s)
-  return (s:gsub("(%W)", "%%%1"))
-end
-
 --- Drink tooltip: vanilla formatWaterAmount renders "<amount>L / <cap>L". Rewrite to pooled.
 --- @param option table
 --- @param pooled number
@@ -54,8 +47,7 @@ local function fixWashOption(option, pooled, yourself)
   if not tt or type(tt.description) ~= "string" then
     return
   end
-  local labelPat = escapePattern(WATER_LABEL)
-  local required = tt.description:match(labelPat .. ":%s*[%d%.]+%s*/%s*([%d%.]+)")
+  local required = tt.description:match(WATER_LABEL .. ":%s*[%d%.]+%s*/%s*([%d%.]+)")
   if not required then
     return
   end
@@ -68,21 +60,19 @@ local function fixWashOption(option, pooled, yourself)
   end
 
   local shown = string.format("%.2f", math.min(pooled, req))
-  tt.description = tt.description:gsub(labelPat .. ":%s*[%d%.]+%s*/%s*[%d%.]+", function()
+  tt.description = tt.description:gsub(WATER_LABEL .. ":%s*[%d%.]+%s*/%s*[%d%.]+", function()
     return WATER_LABEL .. ": " .. shown .. " / " .. required
   end, 1)
 end
 
 --- Recursively walk a context menu and its submenus, patching pooled-water options in place.
 --- @param menu ISContextMenu?
---- @param seen table<table, boolean>
 --- @param pooled number
 --- @param pooledCap number
-local function patchMenu(menu, seen, pooled, pooledCap)
-  if not menu or seen[menu] then
+local function patchMenu(menu, pooled, pooledCap)
+  if not menu then
     return
   end
-  seen[menu] = true
   for _, option in ipairs(menu.options) do
     local callback = option.param1 -- real handler under the addGetUpOption wrapper
     if callback == ISWorldObjectContextMenu.onDrink then
@@ -93,7 +83,7 @@ local function patchMenu(menu, seen, pooled, pooledCap)
       fixWashOption(option, pooled, true)
     end
     if option.subOption then
-      patchMenu(menu:getSubMenu(option.subOption), seen, pooled, pooledCap)
+      patchMenu(menu:getSubMenu(option.subOption), pooled, pooledCap)
     end
   end
 end
@@ -106,5 +96,5 @@ Events.OnFillWorldObjectContextMenu.Add(function(_player, context, worldObjects,
   if not waterObject or not waterObject:getUsesExternalWaterSource() then
     return
   end
-  patchMenu(context, {}, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject))
+  patchMenu(context, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject))
 end)

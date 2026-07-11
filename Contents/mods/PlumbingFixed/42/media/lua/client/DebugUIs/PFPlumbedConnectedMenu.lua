@@ -1,10 +1,5 @@
 require("PlumbingFixed/utils")
 
----@param player IsoPlayer
-local function checkIfInRV(player)
-  return player:getX() > 22500 and player:getY() > 12000
-end
-
 --- @param object IsoObject | nil
 --- @param context ISContextMenu
 local function showDebugMenu(object, context)
@@ -59,13 +54,6 @@ local function showDebugMenu(object, context)
   local totalDescription = ""
   totalDescription = totalDescription .. "connectedSources = " .. #plumbedObjects .. "\n"
   totalDescription = totalDescription .. "connectedWaterAmounts = " .. tostring(waterTotal) .. "\n"
-  -- Compat DEBUG w/ https://steamcommunity.com/workshop/filedetails/?id=3543229299
-  local rvMod = getActivatedMods():contains("\\PROJECTRVInterior42")
-  local inRV = checkIfInRV(getPlayer())
-  if rvMod then
-    totalDescription = totalDescription .. "\nProjectRVInterior42 Debug\n"
-    totalDescription = totalDescription .. "\tInside RV = " .. tostring(inRV) .. "\n"
-  end
   option.toolTip.description = totalDescription
   context:addSubMenu(option, subMenu)
 end

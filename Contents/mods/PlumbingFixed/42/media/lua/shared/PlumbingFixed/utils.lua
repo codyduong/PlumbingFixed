@@ -16,31 +16,33 @@ function getPlumbedSources(waterObject)
   -- Scan the 3x3 grid on the floor above (z + 1)
   for ix = -1, 1 do
     for iy = -1, 1 do
+      -- getGridSquare returns nil for unloaded squares
       local topSq = cell:getGridSquare(x + ix, y + iy, z + 1)
+      if topSq ~= nil then
+        local objects = topSq:getObjects()
+        -- Iterate through all objects on that square
+        for i = 0, objects:size() - 1 do
+          local obj = objects:get(i)
+          local props = obj:getProperties()
+          local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
+          local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
 
-      local objects = topSq:getObjects()
-      -- Iterate through all objects on that square
-      for i = 0, objects:size() - 1 do
-        local obj = objects:get(i)
-        local props = obj:getProperties()
-        local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
-        local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
-
-        if
-          not instanceof(obj, "IsoWorldInventoryObject")
-          and not instanceof(obj, "IsoDeadBody")
-          and not instanceof(obj, "IsoMovingObject")
-          and (
-            hasWaterFlag
-            or hasWaterPipedFlag
-            or (
-              instanceof(obj, "IsoThumpable")
-              and obj:getFluidCapacity() > 0.0
-              and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
+          if
+            not instanceof(obj, "IsoWorldInventoryObject")
+            and not instanceof(obj, "IsoDeadBody")
+            and not instanceof(obj, "IsoMovingObject")
+            and (
+              hasWaterFlag
+              or hasWaterPipedFlag
+              or (
+                instanceof(obj, "IsoThumpable")
+                and obj:getFluidCapacity() > 0.0
+                and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
+              )
             )
-          )
-        then
-          table.insert(sources, obj)
+          then
+            table.insert(sources, obj)
+          end
         end
       end
     end
@@ -176,43 +178,6 @@ function removeWaterTopDown(waterObject, amount)
         end
       end
       FluidContainer.DisposeContainer(mixed)
-
-      -- local container = item.obj:moveFluidToTemporaryContainer(toRemove)
-      -- FluidContainer.DisposeContainer(container)
-
-      -- --- @param waterObj IsoObject
-      -- --- @param removeAmt number
-      -- --- @param fluid Fluid
-      -- local function removeFluidType(waterObj, removeAmt, fluid)
-      --   if removeAmt == 0 then
-      --     return 0
-      --   end
-
-      --   local fluidContainer = waterObj:getFluidContainer()
-      --   local adjustedAmt = math.max(0, fluidContainer:getSpecificFluidAmount(fluid) - removeAmt)
-      --   local remainder = removeAmt - fluidContainer:getSpecificFluidAmount(fluid)
-      --   -- fluidContainer:adjustSpecificFluidAmount(fluid, adjustedAmt)
-      --   if fluidContainer:isPureFluid(fluid) then
-      --     local toDispose = waterObj:moveFluidToTemporaryContainer(removeAmt)
-      --     toDispose:transferTo(removedFluidContainer)
-      --     FluidContainer.DisposeContainer(toDispose)
-      --   else
-
-      --   end
-
-      --   if remainder < 0.0001 then
-      --     return 0
-      --   end
-      --   return remainder
-      -- end
-
-      -- -- just naive prio water types
-      -- local remainder = toRemove
-      -- remainder = removeFluidType(item.obj, remainder, Fluid.TaintedWater)
-      -- remainder = removeFluidType(item.obj, remainder, Fluid.Water)
-      -- remainder = removeFluidType(item.obj, remainder, Fluid.CarbonatedWater)
-
-      -- invariant: should never be able to get here since we check only for these fluid types
     end
   end
   DebugLog.log(DebugType.Mod, "PlumbingFixed (utils.removeWaterTopDown) - " .. completeMixed:toString())

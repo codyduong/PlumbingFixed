@@ -57,13 +57,13 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | `mise run check` | stylua + emmylua_check (mirrors CI `.github/workflows/lua.yml`) |
 | `mise run decompile` | Decompile the installed game into `.decompiled/` for analysis |
 | `mise run bump 1.3.14` | Set `modversion` in both `mod.info` files |
-| `mise run package v1.3.14` | Validate versions + assemble `./PlumbingFixed` |
+| `mise run package v1.3.14` | Validate versions + assemble `dist/PlumbingFixed` |
 | `mise run deploy` | Package + sync into the local Zomboid Workshop dir for testing |
 | `mise run publish <test\|prod> "note"` | Upload to Steam Workshop via steamcmd (required test/prod target; run it yourself; Steam Guard) |
 
-Each task has a **cross-platform** implementation — a POSIX `scripts/<name>.sh` (used on
-Unix via `run`) and a PowerShell `scripts/<name>.ps1` (used on Windows via `run_windows`) —
-so you can also run either directly (`bash scripts/<name>.sh` / `pwsh -File scripts/<name>.ps1`).
+Each task shells out to a PowerShell `scripts/<name>.ps1`, which you can also run directly
+(`pwsh -File scripts/<name>.ps1`). The one exception is `scripts/package.sh` — a CI-only
+twin of `package.ps1` for the Linux release job; keep the two identical when touching packaging.
 Task arguments are declared with mise's `usage` spec, so `mise run bump --help` documents them.
 `emmylua_check`/`stylua` must be on PATH (that's what `mise install` guarantees).
 

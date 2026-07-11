@@ -33,7 +33,7 @@ if (-not (Test-Path $ZomboidDir)) {
 # Clean sync: remove the old deploy, copy the fresh build in.
 if (Test-Path $target) { Remove-Item -Recurse -Force $target }
 New-Item -ItemType Directory -Force -Path (Split-Path $target) | Out-Null
-Copy-Item "./$MOD_NAME" $target -Recurse -Force
+Copy-Item "./dist/$MOD_NAME" $target -Recurse -Force
 
 Write-Host "Synced -> $target" -ForegroundColor Green
 Write-Host "In-game: enable the mod under Workshop (dev) mods, then load the DebugPlumbing scenario." -ForegroundColor Cyan

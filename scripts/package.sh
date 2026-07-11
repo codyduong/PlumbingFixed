@@ -1,7 +1,8 @@
 #!/bin/bash
-# SIBLING SCRIPT: scripts/package.ps1 is the Windows twin. Keep the version validation and
-# the build/copy steps IDENTICAL in both — releases (CI), deploy, and publish all build
-# through package, so any drift here ships a broken layout. See docs/RELEASING.md.
+# CI-ONLY twin of scripts/package.ps1, kept for the Linux release job
+# (.github/workflows/release.yml) — the only .sh script in this repo; local dev uses the
+# .ps1 scripts. Keep the version validation and the build/copy steps IDENTICAL to
+# package.ps1 — any drift ships a broken layout. See docs/RELEASING.md.
 
 set -e
 
@@ -59,14 +60,15 @@ done
 
 echo "All mod.info versions match. Proceeding to package..."
 
-rm -rf "./$MOD_NAME"
-mkdir -p "./$MOD_NAME"
-cp -r ./Contents "./$MOD_NAME/Contents"
-cp ./preview.png "./$MOD_NAME/preview.png"
+STAGE="dist/$MOD_NAME"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+cp -r ./Contents "$STAGE/Contents"
+cp ./preview.png "$STAGE/preview.png"
 # build 41 compat
-cp -r "./Contents/mods/$MOD_NAME/41/"* "./$MOD_NAME/Contents/mods/$MOD_NAME/"
-cp -r "./Contents/mods/$MOD_NAME/42/media" "./$MOD_NAME/Contents/mods/$MOD_NAME/"
-rm -r "./$MOD_NAME/Contents/mods/$MOD_NAME/41"
-rm "./$MOD_NAME/Contents/mods/$MOD_NAME/common/.gitkeep"
+cp -r "./Contents/mods/$MOD_NAME/41/"* "$STAGE/Contents/mods/$MOD_NAME/"
+cp -r "./Contents/mods/$MOD_NAME/42/media" "$STAGE/Contents/mods/$MOD_NAME/"
+rm -r "$STAGE/Contents/mods/$MOD_NAME/41"
+rm "$STAGE/Contents/mods/$MOD_NAME/common/.gitkeep"
 
-echo "Packaging complete for $MOD_NAME"
+echo "Packaging complete for $MOD_NAME -> $STAGE"

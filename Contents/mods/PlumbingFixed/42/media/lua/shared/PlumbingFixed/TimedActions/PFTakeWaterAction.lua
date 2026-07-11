@@ -9,7 +9,6 @@ local _PFTakeWaterAction = ISTakeWaterAction
 local original = {
   isValid = ISTakeWaterAction.isValid,
   updateUse = ISTakeWaterAction.updateUse,
-  -- start = ISTakeWaterAction.start,
   getDuration = ISTakeWaterAction.getDuration,
 }
 
@@ -36,17 +35,7 @@ end
 
 ---@param targetDelta number
 function ISTakeWaterAction:updateUse(targetDelta)
-  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) called with targetDelta "..tostring(targetDelta))
-
-  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject "..tostring(self.waterObject:toString()))
-
-  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject:hasExternalWaterSource() "..tostring(self.waterObject:hasExternalWaterSource()))
-
-  -- DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) self.waterObject:getUsesExternalWaterSource() "..tostring(self.waterObject:getUsesExternalWaterSource()))
-
-  -- It seems like hasExternalWaterSource() is unreliable on the server
-  -- so we'll have to use getUsesExternalWaterSource here
-
+  -- Same server-authoritative gate as isValid above.
   --- @cast self PFTakeWaterAction
   if self.waterObject:getUsesExternalWaterSource() ~= true then
     return original.updateUse(self, targetDelta)
@@ -70,7 +59,7 @@ function ISTakeWaterAction:updateUse(targetDelta)
     local toUseAmount = math.max(0, usedTarget - usedSoFar)
 
     DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) usedSoFar " .. tostring(usedSoFar))
-    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) toUseAmount " .. tostring(usedSoFar))
+    DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:updateUse) toUseAmount " .. tostring(toUseAmount))
     self:transferFromMax(toUseAmount)
   end
 end
@@ -140,7 +129,6 @@ function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
     if o.item:getFluidContainer() then
       o.startUsedAmount = o.item:getFluidContainer():getAmount()
       o.endUsedAmount = o.item:getFluidContainer():getCapacity()
-      -- o.waterUnit = math.min(o.endUsedAmount - o.startUsedAmount, waterAvailable)
       local freeInventoryCapacity = character:getFreeInventoryCapacity()
       if o.item:isEquipped() or character:isEquippedClothing(o.item) then
         freeInventoryCapacity = freeInventoryCapacity / ZomboidGlobals.EquippedOrWornEncumbranceMultiplier
