@@ -1,7 +1,8 @@
----@param maybe IsoObject
+---@param maybe IsoObject?
 ---@return boolean
 function isPlayerConstructedFluidObj(maybe)
-  return instanceof(obj, "IsoThumpable")
+  return obj ~= nil
+    and instanceof(obj, "IsoThumpable")
     and obj:getFluidCapacity() > 0.0
     and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
 end
@@ -29,10 +30,10 @@ function getPlumbedSources(waterObject)
       local topSq = cell:getGridSquare(x + ix, y + iy, z + 1)
       if topSq ~= nil then
         local fluidObject = findFluidObjectAt(x + ix, y + iy, z + 1)
-        local props = fluidObject:getProperties()
+        local props = (fluidObject ~= nil) and fluidObject:getProperties() or nil
         local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
         local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
-        if fluidObject and (hasWaterFlag or hasWaterPipedFlag or isPlayerConstructedFluidObj(fluidObject)) then
+        if hasWaterFlag or hasWaterPipedFlag or isPlayerConstructedFluidObj(fluidObject) then
           table.insert(sources, obj)
         end
       end
