@@ -185,6 +185,30 @@ function removeWaterTopDown(waterObject, amount)
   return completeMixed
 end
 
+--- @param x number
+--- @param y number
+--- @param z number
+--- @return IsoObject?
+function findFluidObjectAt(x, y, z)
+  local sq = getCell():getGridSquare(x, y, z)
+  if sq == nil then
+    return nil
+  end
+  local objects = sq:getObjects()
+  for i = 0, objects:size() - 1 do
+    local obj = objects:get(i)
+    if
+      instanceof(obj, "IsoWorldInventoryObject")
+      and not instanceof(obj, "IsoDeadBody")
+      and not instanceof(obj, "IsoMovingObject")
+      and not obj:getFluidContainer() ~= nil
+    then
+      return obj
+    end
+  end
+  return nil
+end
+
 --- returns the waterObject (that needs adjusting) if there is one
 --- @param worldObjects IsoObject[]
 --- @return IsoObject?

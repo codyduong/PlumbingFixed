@@ -1,4 +1,5 @@
 require("ISUI/ISCollapsableWindow")
+require("PlumbingFixed/utils")
 
 -- Debug editor for the fluid in each barrel feeding a plumbed fixture: one row per
 -- barrel with a live fluid bar (cloned from the vanilla Fluids debug mixer,
@@ -23,37 +24,15 @@ local ROW_H = BTN_H * 2 + PAD * 2
 PFBarrelFluidWindow = ISCollapsableWindow:derive("PFBarrelFluidWindow")
 
 --- Rows identify barrels by square coordinates, not object references: after a server
---- edit the object is retransmitted and a captured reference would go stale.
---- @param coords { x: integer, y: integer, z: integer }
---- @return IsoObject?
-local function resolveFluidObject(coords)
-  local sq = getCell():getGridSquare(coords.x, coords.y, coords.z)
-  if sq == nil then
-    return nil
-  end
-  local objects = sq:getObjects()
-  for i = 0, objects:size() - 1 do
-    local obj = objects:get(i)
-    if obj:getFluidContainer() ~= nil then
-      return obj
-    end
-  end
-  return nil
-end
-
---- @param coords { x: integer, y: integer, z: integer }
---- @return FluidContainer?
-local function resolveFluidContainer(coords)
-  local obj = resolveFluidObject(coords)
-  return obj ~= nil and obj:getFluidContainer() or nil
-end
+--- edit the object is retransmitted and a captured reference would go stale, so every
+--- lookup re-resolves through the shared findFluidObjectAt (utils.lua).
 
 --- Live per-barrel debug block (the detail the old Connected Sources sub-menu listed one
 --- source at a time). Rebuilt each frame so it never goes stale after a server edit.
 --- @param coords { x: integer, y: integer, z: integer }
 --- @return string
 local function barrelDebugText(coords)
-  local obj = resolveFluidObject(coords)
+  local obj = findFluidObjectAt(coords.x, coords.y, coords.z)
   if obj == nil then
     return "No fluid object at x:" .. coords.x .. ", y:" .. coords.y .. ", z:" .. coords.z
   end
@@ -179,7 +158,8 @@ function PFBarrelFluidWindow:createChildren()
     row.fluidBar =
       ISFluidBar:new(self.width - PAD - (BTN_H * 2), y, BTN_H * 2, ROW_H - PAD, getSpecificPlayer(self.playerNum))
     row.fluidBar:initialise()
-    row.fluidBar:setContainer(resolveFluidContainer(coords))
+    local obj = findFluidObjectAt(coords.x, coords.y, coords.z)
+    row.fluidBar:setContainer(obj and obj:getFluidContainer() or nil)
     self:addChild(row.fluidBar)
 
     -- Info affordance carrying the full per-barrel debug block that the old sub-menu
@@ -197,7 +177,8 @@ function PFBarrelFluidWindow:prerender()
   -- Re-resolve every frame: server edits retransmit the barrel, which replaces the
   -- object (and its container) under us.
   for _, row in ipairs(self.rows) do
-    row.fluidBar:setContainer(resolveFluidContainer(row.coords))
+    local obj = findFluidObjectAt(row.coords.x, row.coords.y, row.coords.z)
+    row.fluidBar:setContainer(obj and obj:getFluidContainer() or nil)
     row.infoButton:setTooltip(barrelDebugText(row.coords))
   end
 end
@@ -218,9 +199,9 @@ function PFBarrelFluidWindow:onAdd(row)
       amount = amount,
     })
   else
-    local container = resolveFluidContainer(row.coords)
-    if container then
-      container:addFluid(Fluid.Get(fluidType), amount)
+    local obj = findFluidObjectAt(row.coords.x, row.coords.y, row.coords.z)
+    if obj then
+      obj:getFluidContainer():addFluid(Fluid.Get(fluidType), amount)
     end
   end
 end
@@ -234,9 +215,9 @@ function PFBarrelFluidWindow:onEmpty(row)
       z = row.coords.z,
     })
   else
-    local container = resolveFluidContainer(row.coords)
-    if container then
-      container:Empty()
+    local obj = findFluidObjectAt(row.coords.x, row.coords.y, row.coords.z)
+    if obj then
+      obj:getFluidContainer():Empty()
     end
   end
 end

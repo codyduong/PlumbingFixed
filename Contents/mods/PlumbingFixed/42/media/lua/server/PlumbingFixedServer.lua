@@ -1,28 +1,8 @@
+require("PlumbingFixed/utils")
 require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/TimedActions/PFWashClothing")
 require("PlumbingFixed/TimedActions/PFCleanBandage")
 require("PlumbingFixed/DebugRig")
-
---- Find the object holding a FluidContainer on a square (a rig barrel, but works for any
---- fluid-holding world object).
---- @param x number
---- @param y number
---- @param z number
---- @return IsoObject?
-local function findFluidObjectAt(x, y, z)
-  local sq = getCell():getGridSquare(x, y, z)
-  if sq == nil then
-    return nil
-  end
-  local objects = sq:getObjects()
-  for i = 0, objects:size() - 1 do
-    local obj = objects:get(i)
-    if obj:getFluidContainer() ~= nil then
-      return obj
-    end
-  end
-  return nil
-end
 
 -- MP counterparts of the client debug tools (PFTestRigMenu / PFBarrelFluidWindow): the
 -- world is server-authoritative, so clients only send coordinates and the server
