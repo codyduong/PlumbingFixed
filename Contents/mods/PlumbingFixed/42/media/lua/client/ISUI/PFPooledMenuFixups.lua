@@ -80,11 +80,26 @@ local function fixWashOption(option, pooled, yourself)
   markModified(tt)
 end
 
+--- Empty warning: vanilla Empty (ISWorldObjectContextMenu.onFluidEmpty) drains only the one
+--- barrel the fixture resolves to, but our pooled system empties every connected barrel, so
+--- warn the player. Only called when more than one barrel feeds the fixture. The Java menu
+--- adds this option via a plain addOption with no tooltip, so we create one.
+--- @param option table
+local function fixEmptyOption(option)
+  local tt = ISToolTip:new()
+  tt:initialise()
+  tt:setVisible(false)
+  tt.description = getText("ContextMenu_WillEmptyWarning")
+  option.toolTip = tt
+  markModified(tt)
+end
+
 --- Recursively walk a context menu and its submenus, patching pooled-water options in place.
 --- @param menu ISContextMenu?
 --- @param pooled number
 --- @param pooledCap number
-local function patchMenu(menu, pooled, pooledCap)
+--- @param multiSource boolean whether more than one barrel feeds the fixture
+local function patchMenu(menu, pooled, pooledCap, multiSource)
   if not menu then
     return
   end
@@ -96,9 +111,12 @@ local function patchMenu(menu, pooled, pooledCap)
       fixWashOption(option, pooled, false)
     elseif callback == ISWorldObjectContextMenu.onWashYourself then
       fixWashOption(option, pooled, true)
+    elseif multiSource and option.onSelect == ISWorldObjectContextMenu.onFluidEmpty then
+      -- Empty uses a plain addOption, so the real handler is in onSelect, not param1.
+      fixEmptyOption(option)
     end
     if option.subOption then
-      patchMenu(menu:getSubMenu(option.subOption), pooled, pooledCap)
+      patchMenu(menu:getSubMenu(option.subOption), pooled, pooledCap, multiSource)
     end
   end
 end
@@ -111,5 +129,6 @@ Events.OnFillWorldObjectContextMenu.Add(function(_player, context, worldObjects,
   if not waterObject or not waterObject:getUsesExternalWaterSource() then
     return
   end
-  patchMenu(context, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject))
+  local multiSource = #getPlumbedSources(waterObject) > 1
+  patchMenu(context, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject), multiSource)
 end)

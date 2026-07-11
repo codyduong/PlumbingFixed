@@ -1,3 +1,11 @@
+---@param maybe IsoObject
+---@return boolean
+function isPlayerConstructedFluidObj(maybe)
+  return instanceof(obj, "IsoThumpable")
+    and obj:getFluidCapacity() > 0.0
+    and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
+end
+
 ---@param waterObject IsoObject
 ---@return IsoObject[]
 function getPlumbedSources(waterObject)
@@ -17,32 +25,15 @@ function getPlumbedSources(waterObject)
   for ix = -1, 1 do
     for iy = -1, 1 do
       -- getGridSquare returns nil for unloaded squares
+      local topX, topY, topZ = x + ix, y + iy, z + 1
       local topSq = cell:getGridSquare(x + ix, y + iy, z + 1)
       if topSq ~= nil then
-        local objects = topSq:getObjects()
-        -- Iterate through all objects on that square
-        for i = 0, objects:size() - 1 do
-          local obj = objects:get(i)
-          local props = obj:getProperties()
-          local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
-          local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
-
-          if
-            not instanceof(obj, "IsoWorldInventoryObject")
-            and not instanceof(obj, "IsoDeadBody")
-            and not instanceof(obj, "IsoMovingObject")
-            and (
-              hasWaterFlag
-              or hasWaterPipedFlag
-              or (
-                instanceof(obj, "IsoThumpable")
-                and obj:getFluidCapacity() > 0.0
-                and (obj:hasWater() or getWaterAmount(obj) > 0 or obj:getFluidAmount() == 0)
-              )
-            )
-          then
-            table.insert(sources, obj)
-          end
+        local fluidObject = findFluidObjectAt(x + ix, y + iy, z + 1)
+        local props = fluidObject:getProperties()
+        local hasWaterFlag = (props ~= nil) and props:has(IsoFlagType.water)
+        local hasWaterPipedFlag = (props ~= nil) and props:has(IsoFlagType.waterPiped)
+        if fluidObject and (hasWaterFlag or hasWaterPipedFlag or isPlayerConstructedFluidObj(fluidObject)) then
+          table.insert(sources, obj)
         end
       end
     end
@@ -198,10 +189,10 @@ function findFluidObjectAt(x, y, z)
   for i = 0, objects:size() - 1 do
     local obj = objects:get(i)
     if
-      instanceof(obj, "IsoWorldInventoryObject")
+      obj:getFluidContainer() ~= nil
+      and not instanceof(obj, "IsoWorldInventoryObject")
       and not instanceof(obj, "IsoDeadBody")
       and not instanceof(obj, "IsoMovingObject")
-      and not obj:getFluidContainer() ~= nil
     then
       return obj
     end
