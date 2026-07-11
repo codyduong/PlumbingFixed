@@ -155,7 +155,7 @@ local function threeByThree(x, y, z, walls, tile)
   for i = 0, 2 do
     for j = 0, 2 do
       local sq = forceGetSquare(x + i, y + j, z)
-      sq:addTileObject(tile or "carpentry_02_56")
+      sq:addFloor(tile or "carpentry_02_56")
       if walls then
         if i == 0 then
           createWallW(sq)
@@ -270,5 +270,6 @@ end
 function PFDebugRig.fillEqualTainted(barrels, amountEach)
   for _, barrel in ipairs(barrels) do
     barrel:getFluidContainer():addFluid(Fluid.TaintedWater, amountEach)
+    barrel:transmitCompleteItemToClients()
   end
 end

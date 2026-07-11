@@ -1,16 +1,6 @@
 require("ISUI/ISCollapsableWindow")
 require("PlumbingFixed/utils")
 
--- Debug editor for the fluid in each barrel feeding a plumbed fixture: one row per
--- barrel with a live fluid bar (cloned from the vanilla Fluids debug mixer,
--- ISFluidMixerViewPanel), a fluid picker, an amount box, and Add / Empty buttons.
--- Opened from the "Configure Barrel Fluids" option in the Connected Sources debug menu
--- (PFPlumbedConnectedMenu.lua). In MP the edits go through the server (OnClientCommand in
--- PlumbingFixedServer.lua) because barrel fluid is server-authoritative.
---
--- This is also the prototype for a planned USER-facing panel showing all barrel fluids
--- from the sink — keep the row layout reusable.
-
 local FONT_HGT_SMALL = getTextManager():getFontHeight(UIFont.Small)
 local PAD = 10
 local BTN_H = FONT_HGT_SMALL + 6
@@ -56,7 +46,7 @@ function PFBarrelFluidWindow.open(playerNum, fluidObjects)
     PFBarrelFluidWindow.instance:close()
   end
   local width = 520
-  local height = ROW_H * #fluidObjects + PAD * 2 + 16 -- 16 = title bar
+  local height = ROW_H * #fluidObjects + PAD * 2 + 16 + 32 -- 16 = title bar, 32 for bottom pad
   local ui = PFBarrelFluidWindow:new(
     (getCore():getScreenWidth() - width) / 2,
     (getCore():getScreenHeight() - height) / 2,
@@ -87,10 +77,8 @@ function PFBarrelFluidWindow:createChildren()
   ISCollapsableWindow.createChildren(self)
   local top = self:titleBarHeight() + PAD
 
-  -- Fluid edits mutate server-authoritative world state, so restrict them to admins.
-  -- Debug mode alone (which gates the whole menu) is not enough. In SP there is no access
-  -- level, so allow it there. The server re-checks the same rule (PlumbingFixedServer.lua).
-  local canModify = not isClient() or getAccessLevel() == "admin"
+  -- Either in SP or admin in MP
+  local canModify = not isClient() or PFIsAdmin(getSpecificPlayer(self.playerNum))
 
   for i, coords in ipairs(self.barrelCoords) do
     local row = { coords = coords }

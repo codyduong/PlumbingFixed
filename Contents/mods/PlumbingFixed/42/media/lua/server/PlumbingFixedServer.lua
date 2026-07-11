@@ -17,7 +17,7 @@ Events.OnClientCommand.Add(function(module, command, player, args)
   if type(args.x) ~= "number" or type(args.y) ~= "number" or type(args.z) ~= "number" then
     return
   end
-  if (command == "addBarrelFluid" or command == "emptyBarrel") and player:getAccessLevel() ~= "admin" then
+  if (command == "addBarrelFluid" or command == "emptyBarrel") and not PFIsAdmin(player) then
     return
   end
 
