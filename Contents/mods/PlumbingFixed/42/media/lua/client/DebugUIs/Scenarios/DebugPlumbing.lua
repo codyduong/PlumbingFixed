@@ -29,6 +29,7 @@ debugScenarios.DebugPlumbing = {
     chr:getInventory():AddItem("Base.PipeWrench")
     for i = 1, 3 do
       local bottle = chr:getInventory():AddItem("Base.WaterDispenserBottle")
+      ---@cast bottle InventoryItem
       bottle:getFluidContainer():removeFluid(i * 5)
       chr:getInventory():AddItem("Base.BandageDirty")
     end
@@ -40,8 +41,8 @@ debugScenarios.DebugPlumbing = {
     chr:setWornItem(shirt:getBodyLocation(), shirt)
 
     local clothe = inv:AddItem("Base.Trousers_Denim")
-    clothe:getVisual():setTextureChoice(2)
     ---@cast clothe Clothing
+    clothe:getVisual():setTextureChoice(2)
     clothe:addRandomBlood()
     clothe:addRandomBlood()
     chr:setWornItem(clothe:getBodyLocation(), clothe)
@@ -49,37 +50,37 @@ debugScenarios.DebugPlumbing = {
     chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
     chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
     chr:addBlood(BloodBodyPartType.Torso_Upper, false, false, false)
+    chr:addDirt(BloodBodyPartType.Hand_L, 5, false)
+    chr:addDirt(BloodBodyPartType.Hand_R, 5, false)
+    chr:addDirt(BloodBodyPartType.ForeArm_L, 5, false)
+    chr:addDirt(BloodBodyPartType.ForeArm_R, 5, false)
 
-    -- Plumbed rig
-    local barrels = PFDebugRig.build(8349, 7184, 0, true)
-    for i, barrel in ipairs(barrels) do
-      barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
-    end
-
-    -- Unplumbed control rig
-    local controlBarrels = PFDebugRig.build(8354, 7184, 0, false)
-    local mixedBarrel = controlBarrels[1]
-    if mixedBarrel then
-      local mixedBarrelFC = mixedBarrel:getFluidContainer()
-      mixedBarrelFC:addFluid(Fluid.TaintedWater, 10)
-      mixedBarrelFC:addFluid(Fluid.Water, 5)
-      mixedBarrelFC:addFluid(Fluid.TaintedWater, 10)
-      mixedBarrelFC:addFluid(Fluid.CarbonatedWater, 20)
-      mixedBarrelFC:addFluid(Fluid.Beer, 10)
-      mixedBarrelFC:addFluid(Fluid.Bleach, 10)
-    end
-
-    -- Plumbed washer rig
-    local washerBarrels = PFDebugRig.build(8359, 7184, 0, true, "washer")
-    for i, barrel in ipairs(washerBarrels) do
-      barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
-    end
-
-    -- onStart runs on the loading thread inside IsoWorld.init; generator state applied
-    -- there reads back unconfigured once gameplay begins. Re-apply after load completes
-    -- (OnGameStart fires in IngameState.enter, after loading finishes).
     Events.OnGameStart.Add(function()
+      -- Plumbed rig
+      local barrels = PFDebugRig.build(8349, 7184, 0, true)
+      for i, barrel in ipairs(barrels) do
+        barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
+      end
+
+      -- Unplumbed control rig
+      local controlBarrels = PFDebugRig.build(8354, 7184, 0, false)
+      local mixedBarrel = controlBarrels[1]
+      if mixedBarrel then
+        local mixedBarrelFC = mixedBarrel:getFluidContainer()
+        mixedBarrelFC:addFluid(Fluid.TaintedWater, 10)
+        mixedBarrelFC:addFluid(Fluid.Water, 5)
+        mixedBarrelFC:addFluid(Fluid.TaintedWater, 10)
+        mixedBarrelFC:addFluid(Fluid.CarbonatedWater, 20)
+        mixedBarrelFC:addFluid(Fluid.Beer, 10)
+        mixedBarrelFC:addFluid(Fluid.Bleach, 10)
+      end
+
+      -- Plumbed washer rig
+      local washerBarrels = PFDebugRig.build(8359, 7184, 0, true, "washer")
       PFDebugRig.powerGenerator(8359, 7184, 0)
+      for i, barrel in ipairs(washerBarrels) do
+        barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
+      end
     end)
   end,
 }

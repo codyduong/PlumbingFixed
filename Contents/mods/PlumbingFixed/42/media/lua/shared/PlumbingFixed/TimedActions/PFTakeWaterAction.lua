@@ -20,13 +20,7 @@ function ISTakeWaterAction:isValid()
   if self.item and not self.item:getContainer() then
     return false
   end
-
-  -- Not plumbed: defer to vanilla so we auto-track upstream changes (B42.19 added a
-  -- hasFullInventory() guard here). getUsesExternalWaterSource() is the server-authoritative
-  -- plumbing flag (persisted to save bits + network-synced, per IsoObject.java);
-  -- hasExternalWaterSource() is a client-only transient and reads false on the server.
-  -- See the golden rule in CLAUDE.md.
-  if not self.waterObject:getUsesExternalWaterSource() then
+  if not isMultiSource(self.waterObject) then
     return original.isValid(self)
   end
 
@@ -35,9 +29,7 @@ end
 
 ---@param targetDelta number
 function ISTakeWaterAction:updateUse(targetDelta)
-  -- Same server-authoritative gate as isValid above.
-  --- @cast self PFTakeWaterAction
-  if self.waterObject:getUsesExternalWaterSource() ~= true then
+  if not isMultiSource(self.waterObject) then
     return original.updateUse(self, targetDelta)
   end
 
@@ -112,7 +104,7 @@ end
 ---@param waterTaintedCL boolean
 ---@return ISTakeWaterAction
 function ISTakeWaterAction:new(character, item, waterObject, waterTaintedCL)
-  if not waterObject:getUsesExternalWaterSource() then
+  if not isMultiSource(self.waterObject) then
     DebugLog.log(DebugType.Mod, "PlumbingFixed (PFTakeWaterAction:new) - NOT using custom constructor")
     return originalNew(self, character, item, waterObject, waterTaintedCL)
   end

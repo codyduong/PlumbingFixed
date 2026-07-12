@@ -1,6 +1,7 @@
 require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/TimedActions/PFWashClothing")
 require("PlumbingFixed/TimedActions/PFCleanBandage")
+require("PlumbingFixed/TimedActions/PFWashYourself")
 
 -- The B42.19 fixture water menu is built natively in Java
 -- (zombie/iso/ISWorldObjectContextMenuLogic). It scans the same 3x3 grid above the

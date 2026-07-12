@@ -13,16 +13,15 @@ function ISCleanBandage:isValid()
   if self.item:getContainer() ~= self.character:getInventory() then
     return false
   end
-  -- getUsesExternalWaterSource() is the server-authoritative synced plumbing flag; see the
-  -- golden rule in CLAUDE.md and PFTakeWaterAction.
-  if not self.waterObject:getUsesExternalWaterSource() then
+  if not isMultiSource(self.waterObject) then
     return original.isValid(self)
   end
+
   return getPlumbedWaterAmount(self.waterObject) > 0
 end
 
 function ISCleanBandage:complete()
-  if not self.waterObject:getUsesExternalWaterSource() then
+  if not isMultiSource(self.waterObject) then
     return original.complete(self)
   end
 

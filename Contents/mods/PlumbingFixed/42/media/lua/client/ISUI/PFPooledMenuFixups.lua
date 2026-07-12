@@ -98,8 +98,7 @@ end
 --- @param menu ISContextMenu?
 --- @param pooled number
 --- @param pooledCap number
---- @param multiSource boolean whether more than one barrel feeds the fixture
-local function patchMenu(menu, pooled, pooledCap, multiSource)
+local function patchMenu(menu, pooled, pooledCap)
   if not menu then
     return
   end
@@ -111,12 +110,12 @@ local function patchMenu(menu, pooled, pooledCap, multiSource)
       fixWashOption(option, pooled, false)
     elseif callback == ISWorldObjectContextMenu.onWashYourself then
       fixWashOption(option, pooled, true)
-    elseif multiSource and option.onSelect == ISWorldObjectContextMenu.onFluidEmpty then
+    elseif option.onSelect == ISWorldObjectContextMenu.onFluidEmpty then
       -- Empty uses a plain addOption, so the real handler is in onSelect, not param1.
       fixEmptyOption(option)
     end
     if option.subOption then
-      patchMenu(menu:getSubMenu(option.subOption), pooled, pooledCap, multiSource)
+      patchMenu(menu:getSubMenu(option.subOption), pooled, pooledCap)
     end
   end
 end
@@ -126,9 +125,8 @@ Events.OnFillWorldObjectContextMenu.Add(function(_player, context, worldObjects,
     return
   end
   local waterObject = findWaterObject(worldObjects)
-  if not waterObject or not waterObject:getUsesExternalWaterSource() then
+  if not waterObject or not isMultiSource(waterObject) then
     return
   end
-  local multiSource = #getPlumbedSources(waterObject) > 1
-  patchMenu(context, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject), multiSource)
+  patchMenu(context, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject))
 end)

@@ -10,11 +10,7 @@ local original = {
 }
 
 function ISWashClothing:isValid()
-  -- Server-run timed action: getUsesExternalWaterSource() is the authoritative, synced
-  -- plumbing flag (persisted + network-synced per IsoObject.java). isPlumbed() folds in a
-  -- client-only transient (hasExternalWaterSource) and a modData hack, so it's wrong here.
-  -- Matches PFTakeWaterAction; see the golden rule in CLAUDE.md.
-  if not self.sink:getUsesExternalWaterSource() then
+  if not isMultiSource(self.sink) then
     return original.isValid(self)
   end
 
@@ -29,7 +25,7 @@ function ISWashClothing:isValid()
 end
 
 function ISWashClothing:complete()
-  if not self.sink:getUsesExternalWaterSource() then
+  if not isMultiSource(self.sink) then
     return original.complete(self)
   end
 

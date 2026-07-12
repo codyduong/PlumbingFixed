@@ -2,6 +2,7 @@ require("PlumbingFixed/utils")
 require("PlumbingFixed/TimedActions/PFTakeWaterAction")
 require("PlumbingFixed/TimedActions/PFWashClothing")
 require("PlumbingFixed/TimedActions/PFCleanBandage")
+require("PlumbingFixed/TimedActions/PFWashYourself")
 require("PlumbingFixed/DebugRig")
 require("PlumbingFixed/PFWasherPooling")
 

@@ -205,15 +205,21 @@ end
 --- @return boolean
 function isPlumbed(waterObject)
   local isPlumbedFlag = waterObject:getModData().canBeWaterPiped == false
-  return waterObject:hasExternalWaterSource() or waterObject:getUsesExternalWaterSource() or isPlumbedFlag
+  return waterObject:getUsesExternalWaterSource() or isPlumbedFlag
 end
 
----@param player IsoPlayer?
----@return boolean
+--- @param player IsoPlayer?
+--- @return boolean
 function PFIsAdmin(player)
   if player == nil then
     return false
   end
   local role = player:getRole()
   return role ~= nil and role:getName() == "admin"
+end
+
+--- @param waterObject IsoObject?
+--- @return boolean
+function isMultiSource(waterObject)
+  return (waterObject and isPlumbed(waterObject) and #getPlumbedSources(waterObject) > 1) or false
 end
