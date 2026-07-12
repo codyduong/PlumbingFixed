@@ -48,7 +48,11 @@ run = '& scripts/package.ps1 $env:usage_tag'
 
 [tasks.deploy]
 description = "Package + sync for in-game testing (client=Workshop dev dir, server=testhost mods dir)"
-usage = 'arg "<target>" help="Where to deploy: client, server, or all"'
+usage = '''
+arg "<target>" help="Where to deploy: client, server, or all" {
+  choices "client" "server "all"
+}
+'''
 run = '& scripts/deploy-local.ps1 $env:usage_target'
 
 [tasks.steam-login]
@@ -62,10 +66,13 @@ description = "Publish to Steam Workshop via steamcmd (needs STEAM_USER; see mis
 raw = true
 depends = ["steam-login"]
 usage = '''
-arg "<target>" help="Which item to publish: test or prod (required — no implicit target)"
+arg "<target>" help="Which item to publish: test or prod (required — no implicit target)" {
+  choices "test" "prod"
+}
 arg "[changenote]" help="Workshop changenote for this update" default=""
+flag "--changenote-file <file>" help="Read the changenote from a bbcode file (instead of [changenote])"
 '''
-run = '& scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote'
+run = '& scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote -ChangeNoteFile $env:usage_changenote_file'
 
 [tasks.testhost]
 description = "Run an ephemeral local dedicated server for MP testing (state in .testhost/)"

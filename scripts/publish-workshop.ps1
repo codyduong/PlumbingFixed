@@ -10,14 +10,18 @@
 # which Workshop item we touch — there is no default and no env fallback.
 #
 # Usage: pwsh -NoProfile -File scripts/publish-workshop.ps1 <test|prod> "changenote" [-DryRun]
+#    or: pwsh -NoProfile -File scripts/publish-workshop.ps1 <test|prod> -ChangeNoteFile notes.bbcode
 #    or: mise run publish test "Fixed multi-barrel draw on 42.19"   (verify, then: ... prod ...)
-#   -DryRun   build + print the VDF, don't upload (defaults target to test)
+#   -ChangeNoteFile   read the changenote from a file (bbcode, may be multiline); mutually
+#                     exclusive with the inline changenote argument
+#   -DryRun           build + print the VDF, don't upload (defaults target to test)
 
 param(
   [Parameter(Position = 0)]
   [string]$Target = "",
   [Parameter(Position = 1)]
   [string]$ChangeNote = "",
+  [string]$ChangeNoteFile = "",
   [string]$SteamUser = $env:STEAM_USERNAME,
   [switch]$DryRun
 )
@@ -52,6 +56,19 @@ if (-not $ITEM_IDS.ContainsKey($Target)) {
 }
 $PublishedFileId = $ITEM_IDS[$Target]
 
+# Changenote comes inline or from a bbcode file — never both.
+if ($ChangeNoteFile) {
+  if ($ChangeNote) {
+    Write-Host "ERROR: pass either an inline changenote or -ChangeNoteFile, not both." -ForegroundColor Red
+    exit 2
+  }
+  if (-not (Test-Path $ChangeNoteFile -PathType Leaf)) {
+    Write-Host "ERROR: changenote file not found: $ChangeNoteFile" -ForegroundColor Red
+    exit 2
+  }
+  $ChangeNote = (Get-Content $ChangeNoteFile -Raw).TrimEnd()
+}
+
 # --- Preconditions ----------------------------------------------------------------------
 $haveSteamcmd = [bool](Get-Command steamcmd -ErrorAction SilentlyContinue)
 if (-not $haveSteamcmd -and -not $DryRun) {
@@ -76,8 +93,9 @@ if (-not $ChangeNote) { $ChangeNote = "v$ver" }
 
 # --- Fill the stored VDF template -------------------------------------------------------
 # Escape a substituted value for a VDF quoted string: backslash first, then double-quote.
-# The template's static values (title/description/tags) already carry their final form —
-# only the dynamic single-line substitutions need escaping, so newlines are never touched.
+# The template's static values (title/description/tags) already carry their final form.
+# Newlines need no escaping — VDF quoted strings take them literally (the template's
+# multiline description relies on this), so a file-sourced multiline changenote is fine.
 function ConvertTo-VdfValue([string]$s) {
   ($s -replace '\\', '\\') -replace '"', '\"'
 }
