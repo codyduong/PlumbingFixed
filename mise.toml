@@ -70,9 +70,9 @@ arg "<target>" help="Which item to publish: test or prod (required — no implic
   choices "test" "prod"
 }
 arg "[changenote]" help="Workshop changenote for this update" default=""
-flag "--changenote-file <file>" help="Read the changenote from a bbcode file (instead of [changenote])"
+flag "-f --file <file>" help="Read the changenote from a bbcode file (instead of [changenote])"
 '''
-run = '& scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote -ChangeNoteFile $env:usage_changenote_file'
+run = '& scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote -ChangeNoteFile $env:usage_file'
 
 [tasks.testhost]
 description = "Run an ephemeral local dedicated server for MP testing (state in .testhost/)"

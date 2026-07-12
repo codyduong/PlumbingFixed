@@ -6,11 +6,7 @@
 	"previewfile" "{{PREVIEWFILE}}"
 	"changenote" "{{CHANGENOTE}}"
 	"title" "PlumbingFixed [B42.19+]"
-	"description" "[h2]Fixes Plumbing for Fixtures[/h2]
-Fixes the default behavior of plumbed fixtures that will only pull from one water source until its depleted.
-
-[h1]PlumbingFixed (B42.19 Support)[/h1]
-
+	"description" "[h1]PlumbingFixed (B42.19 Support)[/h1]
 [b]Improves vanilla plumbing behavior with smarter fluid draw[/b]. Instead of a plumbed sink drawing water from exactly one water barrel until it is depleted, it will draw from all of the barrels. When you are using water from multiple water barrels the tooltips will now report the overall amount in all barrels instead of just in one barrel.
 
 This means you can now [b]perform common actions[/b] without interruption and without having to micromanage your water barrels. Perfect addition for any mid to late-game players who struggle with water management with their water barrels.
@@ -20,9 +16,7 @@ This means you can now [b]perform common actions[/b] without interruption and wi
 [b][u]THIS MOD HAS NO EFFECT ON UNPLUMBED FIXTURES.[/u][/b]
 
 [h2]Main Features[/h2]
-
 The mod overrides the following actions
-
 [list]
 	[*]Drinking water from a sink
 	[*]Filling container from a sink
@@ -32,8 +26,7 @@ The mod overrides the following actions
 [/list]
 
 [h2]Mod Compatability List[/h2]
-
-A table of known mods as well as what versions they are compatible with. The purpose of this list is only to list mods that also override or change water handling behavior. I will not list every possible mod that works, just common mods that have been requested. Some mods require explicit work on my end to ensure they are compatible so I will only make mods compatible on a case-by-case basis.
+A table of known mods as well as what versions they are compatible with. The purpose of this list is only to list mods that also override or change water handling behavior [b]AND[/b] are compatible with PlumbingFixed.
 
 [table]
 	[tr]
@@ -59,19 +52,16 @@ A table of known mods as well as what versions they are compatible with. The pur
 	[/tr]
 [/table]
 
-[/b]Is there a mod that should be in this list?[/b] Let me know by posting in the comments or in the discussions and I will take a look as soon as possible. 
+[b]Is there a mod that should be in this list?[/b] Let me know by posting in the comments or in the discussions and I will take a look as soon as possible. 
 
-[b]FYI:[/b] This also means any mods that modify water behavior systems like requiring a water filter/purification or other will most likely be broken with this mod. I will not be considering compatibility with any water overhaul systems unless they are significantly popular or if there is significant demand - since there will be a significant amount on either my part or as a collaboration between both mod authors.
+Mods will be made compatible on a case-by-case basis - determined by ease for me to do it or as a possible collaboration with the other mod author(s).
 
 [h2]Known Issues[/h2]
-This mod by default will turn all fluids plumbed into a fixture into regular water. It is not an issue that affects 99% of players (who is mixing fluids in their water systems). Once B42 turns stable I may reconsider this and figure out a way to mix fluids on output. 
+This mod will turn all fluids plumbed into a fixture into regular water. It is not an issue that affects 99% of players. Once B42 turns stable I may reconsider this and figure out a way to mix fluids on output. 
 
-May be an improvement for roleplay - think poisoning rivals' water systems. Or maybe just having 3x3 barrels full of beer, or something... [b]No promise on this ever being fixed.[/b]
+[u][b]No promise on this ever being fixed.[/b][/u]
 
 [h3]Copyright (c) 2026 Cody Duong, and contributers[/h3]
-
-Workshop ID: 3626008449
-Mod ID: PlumbingFixed
 
 Workshop ID: 3626008449
 Mod ID: PlumbingFixed"
