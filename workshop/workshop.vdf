@@ -66,5 +66,5 @@ This mod will turn all fluids plumbed into a fixture into regular water. It is n
 Workshop ID: 3626008449
 Mod ID: PlumbingFixed"
 	"tags" "Build 42,QoL,Interface"
-	"visibility" "0"
+	"visibility" "{{VISIBILITY}}"
 }

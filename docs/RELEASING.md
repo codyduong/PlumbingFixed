@@ -17,7 +17,7 @@ Two independent version concepts — don't conflate them:
    ```
    (updates `modversion=` in `41/mod.info` and `42/mod.info`).
 2. **Verify**: `mise run check`, then in-game SP + MP per [TESTING.md](TESTING.md).
-3. **Update `workshop/workshop.vdf`** (title / description / tags / visibility) if user-facing
+3. **Update `workshop/workshop.vdf`** (title / description / tags) if user-facing
    behavior changed.
 4. **Commit** the version bump + changes.
 5. **Package sanity** (optional, CI also does this): `mise run package v1.3.14` builds
@@ -49,9 +49,10 @@ Two independent version concepts — don't conflate them:
 - It rebuilds `dist/PlumbingFixed`, fills `workshop/workshop.vdf` into `.publish/workshop.vdf`,
   then runs `steamcmd +login <user> +workshop_build_item <vdf> +quit`.
 - **`workshop/workshop.vdf` is the source of truth for the Workshop page** — a steamcmd
-  KeyValues file stored **verbatim** (title, description with real newlines, tags, visibility,
-  appid, content). The scripts only substitute four dynamic fields: `{{PUBLISHEDFILEID}}` (per
-  target), `{{CONTENTFOLDER}}` + `{{PREVIEWFILE}}` (built absolute paths), and `{{CHANGENOTE}}`.
+  KeyValues file stored **verbatim** (title, description with real newlines, tags, appid,
+  content). The scripts only substitute the dynamic fields: `{{PUBLISHEDFILEID}}` and
+  `{{VISIBILITY}}` (per target — prod is public, test is unlisted), `{{CONTENTFOLDER}}` +
+  `{{PREVIEWFILE}}` (built absolute paths), and `{{CHANGENOTE}}`.
   To change the Steam page, edit `workshop/workshop.vdf` and re-publish — don't edit the page
   in-browser (a publish overwrites it).
 - **Preview it first.** `mise run publish` always uploads, so to preview run the script directly:

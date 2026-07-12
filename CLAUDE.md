@@ -85,9 +85,10 @@ Mod content lives under `Contents/mods/PlumbingFixed/` with PZ's multi-build lay
 - `common/` — empty placeholder (`.gitkeep`).
 
 Steam Workshop page metadata is **source-controlled** as `workshop/workshop.vdf` — a steamcmd
-KeyValues file stored **verbatim** (title/description/tags/visibility/appid). `scripts/publish-workshop.*`
-only substitute the dynamic fields (`{{PUBLISHEDFILEID}}` per target, `{{CONTENTFOLDER}}`/`{{PREVIEWFILE}}`
-built paths, `{{CHANGENOTE}}`) — no bbcode/conf conversion. **steamcmd is the only publish path** — the
+KeyValues file stored **verbatim** (title/description/tags/appid). `scripts/publish-workshop.*`
+only substitute the dynamic fields (`{{PUBLISHEDFILEID}}` and `{{VISIBILITY}}` per target —
+prod public, test unlisted — `{{CONTENTFOLDER}}`/`{{PREVIEWFILE}}` built paths,
+`{{CHANGENOTE}}`) — no bbcode/conf conversion. **steamcmd is the only publish path** — the
 in-game uploader (which read the now-removed `workshop.txt`) is no longer supported. See [docs/RELEASING.md](docs/RELEASING.md).
 
 Lua roots under `42/media/lua/`:

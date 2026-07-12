@@ -3,8 +3,8 @@
 #
 # SOURCE OF TRUTH is workshop/workshop.vdf — a steamcmd KeyValues file stored verbatim. This
 # script only substitutes the dynamic fields ({{PUBLISHEDFILEID}}, {{CONTENTFOLDER}},
-# {{PREVIEWFILE}}, {{CHANGENOTE}}); title/description/tags/visibility are edited directly in
-# that file. See docs/RELEASING.md.
+# {{PREVIEWFILE}}, {{CHANGENOTE}}, {{VISIBILITY}}); title/description/tags are edited directly
+# in that file. Visibility is per-target: prod is public, test is unlisted. See docs/RELEASING.md.
 #
 # The publish TARGET (test|prod) is REQUIRED (unless -DryRun) so we're always explicit about
 # which Workshop item we touch — there is no default and no env fallback.
@@ -55,6 +55,8 @@ if (-not $ITEM_IDS.ContainsKey($Target)) {
   exit 2
 }
 $PublishedFileId = $ITEM_IDS[$Target]
+# ERemoteStoragePublishedFileVisibility: 0 = public, 3 = unlisted. Test stays unlisted.
+$Visibility = if ($Target -eq 'prod') { '0' } else { '3' }
 
 # Changenote comes inline or from a bbcode file — never both.
 if ($ChangeNoteFile) {
@@ -105,7 +107,8 @@ $vdf = $template.
   Replace('{{PUBLISHEDFILEID}}', $PublishedFileId).
   Replace('{{CONTENTFOLDER}}', (ConvertTo-VdfValue $contentFolder)).
   Replace('{{PREVIEWFILE}}', (ConvertTo-VdfValue $previewFile)).
-  Replace('{{CHANGENOTE}}', (ConvertTo-VdfValue $ChangeNote))
+  Replace('{{CHANGENOTE}}', (ConvertTo-VdfValue $ChangeNote)).
+  Replace('{{VISIBILITY}}', $Visibility)
 
 New-Item -ItemType Directory -Force -Path ".publish" | Out-Null
 $vdfPath = (Join-Path (Get-Location) ".publish\workshop.vdf")
