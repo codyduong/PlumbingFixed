@@ -89,7 +89,9 @@ $ver = ($verLine -split '=', 2)[1].Trim()
 pwsh -NoProfile -File (Join-Path $PSScriptRoot "package.ps1") "v$ver"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$contentFolder = (Resolve-Path "./dist/$MOD_NAME").Path
+# The workshop item root must contain mods/ directly (the in-game uploader stripped the
+# Contents wrapper itself), so upload Contents' contents — not the stage root.
+$contentFolder = (Resolve-Path "./dist/$MOD_NAME/Contents").Path
 $previewFile   = (Resolve-Path "./preview.png").Path
 if (-not $ChangeNote) { $ChangeNote = "v$ver" }
 
