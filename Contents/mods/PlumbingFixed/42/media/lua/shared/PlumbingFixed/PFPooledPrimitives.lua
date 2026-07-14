@@ -1,4 +1,4 @@
-require("PlumbingFixed/utils")
+require("PlumbingFixed/PFUtils")
 
 --- @class PFRawBound
 --- @field getFluidAmount fun(self: PFRawBound): number

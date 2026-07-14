@@ -95,7 +95,7 @@ and its `onClean*` handlers are **file-local** in `ISWorldObjectContextMenu.lua`
 (they look up the global env). The primitives still pool any caller that reaches
 `ISCleanBandage`; we don't try to repair the upstream menu, and its batch count is left alone.
 
-## Core utilities (`shared/PlumbingFixed/utils.lua`)
+## Core utilities (`shared/PlumbingFixed/PFUtils.lua`)
 
 - `getPlumbedSources(waterObject) -> IsoObject[]` — if the fixture is plumbed, scans the 3×3
   grid on `z+1` and returns every barrel-like object (has `water`/`waterPiped` flag, or an

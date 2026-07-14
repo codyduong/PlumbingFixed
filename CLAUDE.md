@@ -96,7 +96,7 @@ Lua roots under `42/media/lua/`:
 
 | File | Side | Overrides / provides |
 |------|------|----------------------|
-| `shared/PlumbingFixed/utils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount` (water-category), `getPlumbedFluidAmount` / `hasPlumbedWater` (vanilla-parity reads), `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
+| `shared/PlumbingFixed/PFUtils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount` (water-category), `getPlumbedFluidAmount` / `hasPlumbedWater` (vanilla-parity reads), `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
 | `shared/PlumbingFixed/DebugRig.lua` | shared | `PFDebugRig`: buildable/clearable test rig (3×3 + 4 empty barrels + sink + stairs), reused by the scenario, the MP spawn command, and SP spawning |
 | `shared/PlumbingFixed/PFPooledPrimitives.lua` | shared | patches the six fixture fluid primitives (`getFluidAmount`, `hasFluid`, `hasWater`, `useFluid`, `moveFluidToTemporaryContainer`, `transferFluidTo`) via `__classmetatables` on `IsoObject` + `IsoThumpable`, guarded by `isMultiSource`; the vanilla timed actions run untouched and pool through these |
 | `client/PlumbingFixedClient.lua` | client | `require`s the shared primitives patch on the client |

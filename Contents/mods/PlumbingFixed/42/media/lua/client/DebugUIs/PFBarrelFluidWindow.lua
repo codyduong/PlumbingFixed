@@ -1,5 +1,5 @@
 require("ISUI/ISCollapsableWindow")
-require("PlumbingFixed/utils")
+require("PlumbingFixed/PFUtils")
 
 local FONT_HGT_SMALL = getTextManager():getFontHeight(UIFont.Small)
 local PAD = 10

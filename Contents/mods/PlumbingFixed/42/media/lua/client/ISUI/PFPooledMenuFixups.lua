@@ -1,5 +1,5 @@
 require("lua/client/ISUI/ISWorldObjectContextMenu")
-require("PlumbingFixed/utils")
+require("PlumbingFixed/PFUtils")
 
 -- B42.19 builds the fixture water menu in native Java (zombie/iso/ISWorldObjectContextMenuLogic).
 -- It gates and labels each option from the fixture's OWN fluid amount, which for a plumbed

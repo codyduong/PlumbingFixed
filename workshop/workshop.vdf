@@ -38,15 +38,15 @@ A table of known mods as well as what versions they are compatible with. The pur
 		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3460812542]Washing Menus Improved [B42][/url][/td]
 		[td]4.7.13[/td]
 		[td]
-			Partially Incompatible - [u]figuring out compatibility[/u]
-			This mod will use the vanilla behavior when cleaning clothes/washing bandages.
+			Compatible - [u]will be supported[/u]
+			This mod will use the PlumbingFixed behavior when cleaning clothes/washing bandages.
 		[/td]
 	[/tr]
 	[tr]
 		[td]Common Sense[/td]
 		[td]Any[/td]
 		[td]
-			Not supported - [u]will not be supported[/u]
+			Unknown Support - [u]will not be supported[/u]
 			Common Sense has had many developers who have forked or patched their own versions of this mod. It would be too much work to find and make them compatible with any/all of them. Until it receives a single dedicated developer/definitive version then I will not consider making it compatible.
 		[/td]
 	[/tr]
