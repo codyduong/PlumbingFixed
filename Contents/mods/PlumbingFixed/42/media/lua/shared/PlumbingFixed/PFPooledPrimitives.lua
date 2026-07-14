@@ -18,14 +18,18 @@ local function installPooledPrimitives(class)
   --- @type IsoObject
   local index = __classmetatables[class].__index
 
-  local vanilla = {
-    getFluidAmount = index.getFluidAmount,
-    hasFluid = index.hasFluid,
-    hasWater = index.hasWater,
-    useFluid = index.useFluid,
-    moveFluidToTemporaryContainer = index.moveFluidToTemporaryContainer,
-    transferFluidTo = index.transferFluidTo,
-  }
+  local vanilla = rawget(index, "__PFvanilla")
+  if vanilla == nil then
+    vanilla = {
+      getFluidAmount = index.getFluidAmount,
+      hasFluid = index.hasFluid,
+      hasWater = index.hasWater,
+      useFluid = index.useFluid,
+      moveFluidToTemporaryContainer = index.moveFluidToTemporaryContainer,
+      transferFluidTo = index.transferFluidTo,
+    }
+    rawset(index, "__PFvanilla", vanilla)
+  end
 
   setmetatable(index, {
     __index = function(obj, key)

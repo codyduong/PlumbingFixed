@@ -19,7 +19,11 @@ runtime resolves `obj:method()` through a plain Lua
 table at `__classmetatables[Class].__index`. The patch captures the six vanilla functions
 into a local, then reassigns the table entries in place — the standard
 capture-then-reassign override pattern (verified in-game: the entries are plain
-reassignable functions and dispatch honors them). Every other method on the table is
+reassignable functions and dispatch honors them). The captures are stashed on the method
+table itself (`rawget`/`rawset` `__PFvanilla`): the table is Java-side and can survive
+PZ's several-per-session Lua state reloads, and re-capturing on a reload would grab our
+own overrides as "vanilla" and make the fallback recurse — a reload reuses the stash and
+only rebinds the overrides and metatable to the fresh state's globals. Every other method on the table is
 untouched, so non-fluid dispatch pays nothing. Kahlua flattens inherited methods into each
 concrete class's own table, so `IsoObject` and `IsoThumpable` are patched separately.
 
