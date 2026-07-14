@@ -67,10 +67,6 @@ if isDebugEnabled() then
     end
 
     addSpawnOption("Sink Rig", "sink", "Fixture: sink.")
-    addSpawnOption(
-      "Washer Rig",
-      "washer",
-      "Fixture: clothing washer."
-    )
+    addSpawnOption("Washer Rig", "washer", "Fixture: clothing washer.")
   end)
 end

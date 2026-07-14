@@ -19,13 +19,14 @@ Some state is client-only, some server-only, some synced — and getters can sil
 stale/false values on the "wrong" side. This is the #1 source of bugs in this mod.
 
 Real landmines already hit here:
-- `IsoObject:hasExternalWaterSource()` is **unreliable on the server** — the timed action
-  uses `getUsesExternalWaterSource()` instead (see `PFTakeWaterAction.lua:updateUse`).
-- `isPlumbed()` (our util) folds together `hasExternalWaterSource()` **OR**
-  `getUsesExternalWaterSource()` **OR** `modData.canBeWaterPiped == false`. Which one is
-  correct depends on **which side the caller runs on**. This is now settled for the timed
-  actions — both gate on `getUsesExternalWaterSource()` (server-authoritative); `isPlumbed()`
-  remains only in the shared `utils.lua` scan. See [KNOWN LANDMINES](#known-landmines).
+- `IsoObject:hasExternalWaterSource()` is **unreliable on the server** — the mod gates on
+  `getUsesExternalWaterSource()` instead (via `isMultiSource` in `utils.lua`, the guard for
+  every patched primitive in `PFPooledPrimitives.lua`).
+- `isPlumbed()` (our util) folds together `getUsesExternalWaterSource()` **OR**
+  `modData.canBeWaterPiped == false`. Which predicate is correct depends on **which side the
+  caller runs on**. This is now settled: every pooled code path guards through
+  `isMultiSource()` → `getUsesExternalWaterSource()` (server-authoritative).
+  See [KNOWN LANDMINES](#known-landmines).
 
 **Before overriding or relying on any vanilla API, verify it three ways:**
 1. **Which vanilla dir defines the caller?** `client/` runs on the client, `server/` on the
@@ -88,32 +89,39 @@ Steam Workshop page metadata is **source-controlled** as `workshop/workshop.vdf`
 KeyValues file stored **verbatim** (title/description/tags/appid). `scripts/publish-workshop.*`
 only substitute the dynamic fields (`{{PUBLISHEDFILEID}}` and `{{VISIBILITY}}` per target —
 prod public, test unlisted — `{{CONTENTFOLDER}}`/`{{PREVIEWFILE}}` built paths,
-`{{CHANGENOTE}}`) — no bbcode/conf conversion. **steamcmd is the only publish path** — the
-in-game uploader (which read the now-removed `workshop.txt`) is no longer supported. See [docs/RELEASING.md](docs/RELEASING.md).
+`{{CHANGENOTE}}`) — no bbcode/conf conversion. **steamcmd is the only publish path.**
+See [docs/RELEASING.md](docs/RELEASING.md).
 
 Lua roots under `42/media/lua/`:
 
 | File | Side | Overrides / provides |
 |------|------|----------------------|
-| `shared/PlumbingFixed/utils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount`, `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
+| `shared/PlumbingFixed/utils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount` (water-category), `getPlumbedFluidAmount` / `hasPlumbedWater` (vanilla-parity reads), `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
 | `shared/PlumbingFixed/DebugRig.lua` | shared | `PFDebugRig`: buildable/clearable test rig (3×3 + 4 empty barrels + sink + stairs), reused by the scenario, the MP spawn command, and SP spawning |
-| `shared/PlumbingFixed/TimedActions/PFTakeWaterAction.lua` | shared | `ISTakeWaterAction:{isValid,updateUse,transferFromMax,new}` |
-| `shared/PlumbingFixed/TimedActions/PFWashClothing.lua` | shared | `ISWashClothing:{isValid,complete}` |
-| `shared/PlumbingFixed/TimedActions/PFCleanBandage.lua` | shared | `ISCleanBandage:{isValid,complete}` |
-| `client/PlumbingFixedClient.lua` | client | `require`s the shared timed actions on the client (B42.19 builds the fixture menu in native Java, so there is **no** menu override) |
+| `shared/PlumbingFixed/PFPooledPrimitives.lua` | shared | patches the six fixture fluid primitives (`getFluidAmount`, `hasFluid`, `hasWater`, `useFluid`, `moveFluidToTemporaryContainer`, `transferFluidTo`) via `__classmetatables` on `IsoObject` + `IsoThumpable`, guarded by `isMultiSource`; the vanilla timed actions run untouched and pool through these |
+| `client/PlumbingFixedClient.lua` | client | `require`s the shared primitives patch on the client |
 | `client/ISUI/PFPooledMenuFixups.lua` | client | `OnFillWorldObjectContextMenu` post-processor: rewrites Drink/Wash tooltips + Wash grey-out to pooled totals; debug-mode "Modified by Plumbing Fixed" marker |
 | `client/DebugUIs/PFPlumbedConnectedMenu.lua` | client | debug "Connected Sources" inspector + "Configure Barrel Fluids..." |
 | `client/DebugUIs/PFBarrelFluidWindow.lua` | client | per-barrel fluid editor window (debug; MP edits go through the server) |
 | `client/DebugUIs/PFTestRigMenu.lua` | client | mod option (PZAPI.ModOptions) + "Spawn PlumbingFixed Test Rig" debug context option |
 | `client/DebugUIs/Scenarios/DebugPlumbing.lua` | client | the `DebugPlumbing` test scenario (two rigs via `PFDebugRig` + loadout) |
-| `server/PlumbingFixedServer.lua` | server | `require`s the shared timed actions on the server; `OnClientCommand` handlers for rig spawn / barrel fluid edits (capability-gated) |
+| `server/PlumbingFixed/PFWasherPooling.lua` | server | event-driven (`OnWaterAmountChange` + `EveryOneMinute`) pooling for running washers, whose draws happen Java-side and bypass the Lua primitives |
+| `server/PlumbingFixedServer.lua` | server | `require`s the shared primitives patch on the server; `OnClientCommand` handlers for rig spawn / barrel fluid edits (capability-gated) |
 
-**Override pattern** (used everywhere): `require("lua/.../ISFoo")` to load vanilla, capture
-originals in a local `original = { method = ISFoo.method }` table, then reassign
-`function ISFoo:method() ... end`. `new` is captured in its own local (`originalNew`) —
-putting it in the table breaks metatable resolution. Because we mutate the **global table
-in place**, every vanilla caller transparently gets the patched behavior. Load order (mod
-after vanilla) is what makes this work. Full walkthrough + the water algorithm in
+**Patch pattern**: `PFPooledPrimitives.lua` captures each class's six vanilla fluid
+methods into a local,
+then reassigns the entries of the class's method table in place
+(`__classmetatables[Class].__index`, which Kahlua dispatches userdata calls through). The
+overrides are one-line delegates to the pooled utils, which self-guard: not
+`isMultiSource` → call the vanilla method as `obj.__PFraw:method(...)` — a proxy bound to
+the object by a function `__index` on the method table's metatable (PZ's
+`KahluaThread.tableget` passes the **original receiver** to a function `__index` anywhere
+in the lookup chain, and only consults it after the method table misses, so real dispatch
+never pays for it). Kahlua **flattens
+inherited methods into each concrete class's table**, so `IsoObject` and `IsoThumpable`
+are patched separately. This covers every *Lua* caller (vanilla actions and third-party mods alike);
+Java-internal callers bypass it — hence `PFPooledMenuFixups` (native menu) and
+`PFWasherPooling` (washer machinery). Full walkthrough + the water algorithm in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
@@ -165,18 +173,29 @@ Keep these three aligned with the installed build. When the game updates, follow
 
 ## Known landmines
 
-- **`hasExternalWaterSource()` vs `getUsesExternalWaterSource()` vs `isPlumbed()`** — resolved
-  for the timed actions: `PFTakeWaterAction` and `PFWashClothing` both gate on
+- **`hasExternalWaterSource()` vs `getUsesExternalWaterSource()` vs `isPlumbed()`** — resolved:
+  every patched primitive in `PFPooledPrimitives.lua` guards on `isMultiSource()` →
   `getUsesExternalWaterSource()`, the server-authoritative synced flag (per `IsoObject.java`:
   persisted to save bits + network-synced). `hasExternalWaterSource()` is a client-only
   transient that reads false on the server. `isPlumbed()` (which also folds in the
-  `canBeWaterPiped` modData hack) is still used by the shared `utils.lua` scan. As of B42.19
-  the fixture menu is native Java, so there is no client-side menu predicate left to reconcile.
-  Still verify authority per side (§Golden rule) before any future predicate change.
-- **Fluid mixing:** plumbed barrels currently have all fluids converted to water on draw
-  (`removeWaterTopDown` purifies tainted→water and pools everything). Storing non-water
-  (gasoline/bleach) above a plumbed fixture is a known inadvertent behavior — documented in the
-  `description` value of `workshop/workshop.vdf`.
+  `canBeWaterPiped` modData hack) feeds that guard and the shared `utils.lua` scan. (B42.19
+  moved the fixture menu to native Java, which removed the client-side menu predicate we
+  previously had to reconcile against the action-side one.) Still verify authority per side
+  (§Golden rule) before any future predicate change.
+- **Lua-dispatch only:** the `__classmetatables` patch intercepts Lua callers exclusively. Java
+  code calling `getFluidAmount()`/`useFluid()` internally (native context menu, washer update
+  loop, `hasFluid`/`hasWater` bodies) never sees it — that's why `hasFluid`/`hasWater` are
+  patched explicitly and why `PFPooledMenuFixups`/`PFWasherPooling` must stay.
+- **Fluid mixing:** non-water sources are **excluded from the pool, not disqualifying** —
+  `isViableWaterSource` (`utils.lua`) gates every draw and water figure, and
+  `getWaterAmount` sums by `FluidCategory.Water` membership (read from each fluid's
+  `Categories` in `fluids.txt`, so new water-category fluids are picked up automatically —
+  Water/Tainted/Carbonated as of 42.19); tainted water is purified to Water on draw. Totals
+  (`getPlumbedFluidAmount`/`getPlumbedWaterCapacity`) stay deliberately unfiltered, so they
+  diverge from `getPlumbedWaterAmount` when non-water sits in a barrel. The holistic end
+  state (indiscriminate mixing + per-barrel opt-out) is tracked in
+  [docs/FLUID-MIXING.md](docs/FLUID-MIXING.md) — keep the `FUTURE(fluid-mixing)` stubs
+  aligned with it.
 - **B41 stub ships 42 media:** `scripts/package.*` promote `42/media` into the mod root that
   the B41 `mod.info` points at, so a real B41 client would load B42 Lua (likely broken).
   Treated as an open decision (keep the stub vs drop B41), not changed yet.

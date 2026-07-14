@@ -50,7 +50,7 @@ run = '& scripts/package.ps1 $env:usage_tag'
 description = "Package + sync for in-game testing (client=Workshop dev dir, server=testhost mods dir)"
 usage = '''
 arg "<target>" help="Where to deploy: client, server, or all" {
-  choices "client" "server "all"
+  choices "client" "server" "all"
 }
 '''
 run = '& scripts/deploy-local.ps1 $env:usage_target'

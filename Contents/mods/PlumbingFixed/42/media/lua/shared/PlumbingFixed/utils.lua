@@ -3,7 +3,7 @@
 --- @field __PFraw PFRawBound
 
 ---@param waterObject IsoObject
----@param predicate fun(src: IsoObject): boolean
+---@param predicate? fun(src: IsoObject): boolean
 ---@return IsoObject[]
 function getPlumbedSources(waterObject, predicate)
   local sources = {}
@@ -20,7 +20,7 @@ function getPlumbedSources(waterObject, predicate)
     for iy = -1, 1 do
       local src = findPlumbedSourceAt(x + ix, y + iy, z + 1)
       if src ~= nil then
-        if predicate and predicate(src) or true then
+        if predicate == nil or predicate(src) then
           table.insert(sources, src)
         end
       end
@@ -29,7 +29,23 @@ function getPlumbedSources(waterObject, predicate)
   return sources
 end
 
---- Drawable water-category fluid across the pool (the subset removeWaterTopDown moves).
+--- A source the pool may draw from: contents entirely water-category (an empty
+--- container passes — isAllCategory is vacuously true — and contributes 0).
+--- Reserve-water sources (no FluidContainer) are always water. Non-viable sources
+--- still count toward pooled totals/capacity and the multi-source gate; only the
+--- water figures and draws exclude them — mirroring vanilla, which skips barrels
+--- one by one rather than failing the whole supply.
+--- FUTURE(fluid-mixing): docs/FLUID-MIXING.md — indiscriminate pooling would relax
+--- this category check into a per-barrel opt-out (e.g. a sluice gate).
+--- @param src IsoObject
+--- @return boolean
+function isViableWaterSource(src)
+  local container = src:getFluidContainer()
+  return container == nil or container:isAllCategory(FluidCategory.Water)
+end
+
+--- Drawable water across the pool (the subset removeWaterTopDown moves): water in
+--- viable sources only.
 --- @param waterObject IsoObject
 --- @return number
 function getPlumbedWaterAmount(waterObject)
@@ -39,13 +55,15 @@ function getPlumbedWaterAmount(waterObject)
   end
 
   local amount = 0.0
-  for _, src in ipairs(sources) do
+  for _, src in ipairs(getPlumbedSources(waterObject, isViableWaterSource)) do
     amount = amount + getWaterAmount(src)
   end
   return amount
 end
 
 --- Vanilla-parity getFluidAmount(): total fluid of any type across the pool.
+--- Deliberately unfiltered (non-viable sources included) — totals list everything
+--- even though draws only take viable water. See docs/FLUID-MIXING.md.
 --- @param waterObject IsoObject
 --- @return number
 function getPlumbedFluidAmount(waterObject)
@@ -61,8 +79,8 @@ function getPlumbedFluidAmount(waterObject)
   return amount
 end
 
---- Vanilla-parity hasWater(): fluid present and every non-empty source is entirely
---- water-category.
+--- Vanilla-parity hasWater(): any viable source holds water. Non-viable sources are
+--- excluded, not disqualifying.
 --- @param waterObject IsoObject
 --- @return boolean
 function hasPlumbedWater(waterObject)
@@ -70,18 +88,7 @@ function hasPlumbedWater(waterObject)
   if not isMultiSource(sources) then
     return waterObject.__PFraw:hasWater()
   end
-
-  local hasAny = false
-  for _, src in ipairs(sources) do
-    local container = src:getFluidContainer()
-    if container:getAmount() > 0 then
-      if not container:isAllCategory(FluidCategory.Water) then
-        return false
-      end
-      hasAny = true
-    end
-  end
-  return hasAny
+  return getPlumbedWaterAmount(waterObject) > 0
 end
 
 --- @param waterObject IsoObject
@@ -112,9 +119,15 @@ function getWaterAmount(waterObject)
     return waterObject:getFluidAmount()
   end
 
-  return container:getSpecificFluidAmount(Fluid.Water)
-    + container:getSpecificFluidAmount(Fluid.TaintedWater)
-    + container:getSpecificFluidAmount(Fluid.CarbonatedWater)
+  local amount = 0.0
+  local allFluids = Fluid.getAllFluids()
+  for i = 0, allFluids:size() - 1 do
+    local fluid = allFluids:get(i)
+    if fluid:isCategory(FluidCategory.Water) then
+      amount = amount + container:getSpecificFluidAmount(fluid)
+    end
+  end
+  return amount
 end
 
 --- @param waterObject IsoObject
@@ -132,11 +145,17 @@ function removeWaterTopDown(waterObject, amount)
 
   --- @type table<number, { obj: IsoObject, amt: number }>
   local list = {}
-  for _, src in ipairs(sources) do
-    table.insert(list, { obj = src, amt = getWaterAmount(src) })
+  local available = 0.0
+  for _, src in ipairs(getPlumbedSources(waterObject, isViableWaterSource)) do
+    local amt = getWaterAmount(src)
+    table.insert(list, { obj = src, amt = amt })
+    available = available + amt
   end
 
-  local remaining = amount
+  -- Clamp to the viable pool: our own callers pre-clamp via getPlumbedWaterAmount, but
+  -- the washer path (PFWasherPooling) re-draws a Java-side delta that can exceed
+  -- drawable water when non-viable barrels sit in the pool.
+  local remaining = math.min(amount, available)
   while remaining > 0.0001 do -- Threshold for float precision
     -- 2. Sort descending
     table.sort(list, function(a, b)
@@ -183,6 +202,9 @@ function removeWaterTopDown(waterObject, amount)
     local toRemove = original - item.amt
     if toRemove > 0 then
       -- purify only tainted water
+      -- FUTURE(fluid-mixing): only water-category fluids reach this loop today (viable
+      -- sources); indiscriminate pooling would route non-water through the passthrough
+      -- branch below. See docs/FLUID-MIXING.md.
       local mixed = item.obj:moveFluidToTemporaryContainer(toRemove)
       local allFluids = Fluid.getAllFluids()
       for j = 0, allFluids:size() - 1 do

@@ -69,7 +69,7 @@ Three pieces:
 1. **`server/PlumbingFixed/PFWasherPooling.lua`** *(new)* — the `OnWaterAmountChange`
    handler. Lives in `server/` so it loads in SP and on a dedicated server — exactly
    where the event fires.
-2. **`utils.drawFromPool(sources, amount)`** *(new seam in shared utils)* — single
+2. **`utils.drawFromPool(waterObject, amount)`** *(new seam in shared utils)* — single
    dispatch point for all pool draws. Today: delegates to `removeWaterTopDown`
    (Fullest-First). Future: reads a sandbox option to pick **Fullest-First** vs
    **Round-Robin** (Round-Robin is stateful — needs a cursor, likely fixture modData —

@@ -65,8 +65,10 @@ Two independent version concepts — don't conflate them:
   should live in the description as `[img]<url>[/img]` BBCode (e.g. raw GitHub URLs) inside the
   `description` value of `workshop/workshop.vdf`. Verify the page after your first publish.
 
-steamcmd is the only supported publish path. The in-game uploader (PZ → Workshop →
-"Upload/Update mod") is **no longer supported** — it read `workshop.txt`, which we've dropped.
+steamcmd is the only publish path. Historically the in-game uploader (PZ → Workshop →
+"Upload/Update mod") published this mod from a `workshop.txt` in the mod folder; we dropped
+that file when the page metadata moved into source-controlled `workshop/workshop.vdf`, so
+the uploader has nothing to read — publish via steamcmd only.
 
 ## After publishing
 
