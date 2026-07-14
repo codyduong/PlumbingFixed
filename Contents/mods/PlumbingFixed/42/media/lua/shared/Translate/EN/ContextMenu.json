@@ -1,0 +1,11 @@
+{
+    "ContextMenu_DebugConnectedSources": "Debug Plumbed Connections",
+    "ContextMenu_WillEmptyWarning": "This will empty from your connected barrels as well",
+    "ContextMenu_PFConnectedBarrelsInfo": "Connected Barrels Info:",
+    "ContextMenu_PFSpawnTestRig": "Spawn PlumbingFixed Test Rig",
+    "ContextMenu_PFSinkRig": "Sink Rig",
+    "ContextMenu_PFWasherRig": "Washer Rig",
+    "ContextMenu_PFSpawnRigTooltip": "Clears %1x%2 tiles (two floors) at the clicked square and builds a plumbed test rig there (4 barrels, 15L tainted water each; edit via Configure Barrel Fluids).",
+    "ContextMenu_PFFixtureSink": "Fixture: sink.",
+    "ContextMenu_PFFixtureWasher": "Fixture: clothing washer."
+}

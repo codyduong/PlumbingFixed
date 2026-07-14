@@ -29,7 +29,7 @@ local function showDebugMenu(player, object, context)
   option.toolTip = ISToolTip:new()
   option.toolTip:initialise()
   option.toolTip:setVisible(false)
-  option.toolTip:setName("Connected Barrels Info:")
+  option.toolTip:setName(getText("ContextMenu_PFConnectedBarrelsInfo"))
   local totalDescription = ""
   totalDescription = totalDescription .. "connectedSources = " .. #plumbedObjects .. "\n"
   totalDescription = totalDescription .. "connectedWaterAmounts = " .. tostring(waterTotal) .. "\n"

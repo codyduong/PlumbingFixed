@@ -4,15 +4,9 @@ if isDebugEnabled() then
   local options = PZAPI.ModOptions:create("PlumbingFixed", "Plumbing Fixed")
   local spawnRigOption = options:addTickBox(
     "spawnTestRig",
-    "Enable 'Spawn Test Rig'",
+    getText("IGUI_PFSpawnTestRigOption"),
     false,
-    "Adds a debug/admin-only right-click option that CLEARS a "
-      .. PFDebugRig.WIDTH
-      .. "x"
-      .. PFDebugRig.DEPTH
-      .. " area (two floors!) and builds the PlumbingFixed barrel/sink test rig there. "
-      .. "For mod development only -- DO NOT ENABLE unless you know what you are doing. "
-      .. "In multiplayer this requires admin access."
+    getText("IGUI_PFSpawnTestRigTooltip", PFDebugRig.WIDTH, PFDebugRig.DEPTH)
   )
 
   Events.OnPreFillWorldObjectContextMenu.Add(function(player, context, worldObjects)
@@ -34,7 +28,7 @@ if isDebugEnabled() then
     end
     local x, y, z = sq:getX(), sq:getY(), sq:getZ()
 
-    local parent = context:addDebugOption("Spawn PlumbingFixed Test Rig", nil, nil)
+    local parent = context:addDebugOption(getText("ContextMenu_PFSpawnTestRig"), nil, nil)
     if parent == nil then
       return
     end
@@ -57,16 +51,12 @@ if isDebugEnabled() then
       option.toolTip:initialise()
       option.toolTip:setVisible(false)
       option.toolTip:setName(name)
-      option.toolTip.description = "Clears "
-        .. PFDebugRig.WIDTH
-        .. "x"
-        .. PFDebugRig.DEPTH
-        .. " tiles (two floors) at the clicked square and builds a plumbed test rig there"
-        .. " (4 barrels, 15L tainted water each; edit via Configure Barrel Fluids). "
+      option.toolTip.description = getText("ContextMenu_PFSpawnRigTooltip", PFDebugRig.WIDTH, PFDebugRig.DEPTH)
+        .. " "
         .. fixtureDesc
     end
 
-    addSpawnOption("Sink Rig", "sink", "Fixture: sink.")
-    addSpawnOption("Washer Rig", "washer", "Fixture: clothing washer.")
+    addSpawnOption(getText("ContextMenu_PFSinkRig"), "sink", getText("ContextMenu_PFFixtureSink"))
+    addSpawnOption(getText("ContextMenu_PFWasherRig"), "washer", getText("ContextMenu_PFFixtureWasher"))
   end)
 end

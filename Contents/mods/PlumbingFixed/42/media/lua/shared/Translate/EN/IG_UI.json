@@ -1,0 +1,7 @@
+{
+    "IGUI_PFBarrelFluidsTitle": "PlumbingFixed Barrel Fluids",
+    "IGUI_PFBarrelLabel": "Barrel %1 (%2,%3,%4)",
+    "IGUI_PFSpawnTestRigOption": "Enable 'Spawn Test Rig'",
+    "IGUI_PFSpawnTestRigTooltip": "Adds a debug/admin-only right-click option that CLEARS a %1x%2 area (two floors!) and builds the PlumbingFixed barrel/sink test rig there. For mod development only -- DO NOT ENABLE unless you know what you are doing. In multiplayer this requires admin access.",
+    "IGUI_PFDebugScenarioName": "Plumbing Fixed Debug"
+}

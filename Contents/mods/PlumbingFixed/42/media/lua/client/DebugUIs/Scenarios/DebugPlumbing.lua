@@ -6,7 +6,7 @@ if debugScenarios == nil then
 end
 
 debugScenarios.DebugPlumbing = {
-  name = "Plumbing Fixed Debug",
+  name = getText("IGUI_PFDebugScenarioName"),
   forceLaunch = true,
   startLoc = { x = 8350, y = 7190, z = 0 },
   setSandbox = function()

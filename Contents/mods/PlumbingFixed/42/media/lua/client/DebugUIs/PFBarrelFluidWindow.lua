@@ -63,7 +63,7 @@ end
 function PFBarrelFluidWindow:new(x, y, width, height, playerNum, fluidObjects)
   local o = ISCollapsableWindow.new(self, x, y, width, height)
   --- @cast o PFBarrelFluidWindow
-  o.title = "PlumbingFixed Barrel Fluids"
+  o.title = getText("IGUI_PFBarrelFluidsTitle")
   o.playerNum = playerNum
   o.barrelCoords = {}
   for _, obj in ipairs(fluidObjects) do
@@ -94,7 +94,7 @@ function PFBarrelFluidWindow:createChildren()
       x,
       y,
       BTN_H,
-      "Barrel " .. i .. " (" .. coords.x .. "," .. coords.y .. "," .. coords.z .. ")",
+      getText("IGUI_PFBarrelLabel", i, coords.x, coords.y, coords.z),
       1,
       1,
       1,
@@ -132,7 +132,7 @@ function PFBarrelFluidWindow:createChildren()
     self:addChild(row.amountBox)
     x = x + 56 + PAD
 
-    row.addButton = ISButton:new(x, controlY, 56, BTN_H, "Add", self, function()
+    row.addButton = ISButton:new(x, controlY, 56, BTN_H, getText("IGUI_DebugMenu_Add"), self, function()
       self:onAdd(row)
     end)
     row.addButton:initialise()
@@ -140,7 +140,7 @@ function PFBarrelFluidWindow:createChildren()
     self:addChild(row.addButton)
     x = x + 56 + PAD
 
-    row.emptyButton = ISButton:new(x, controlY, 56, BTN_H, "Empty", self, function()
+    row.emptyButton = ISButton:new(x, controlY, 56, BTN_H, getText("ContextMenu_Empty"), self, function()
       self:onEmpty(row)
     end)
     row.emptyButton:initialise()
