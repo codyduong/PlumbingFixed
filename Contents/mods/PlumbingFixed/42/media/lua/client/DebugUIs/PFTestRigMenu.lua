@@ -70,8 +70,7 @@ if isDebugEnabled() then
     addSpawnOption(
       "Washer Rig",
       "washer",
-      "Fixture: clothing washer -- needs power and dirty clothing inside; a wash cycle"
-        .. " runs 90 in-game minutes at 1 unit/min (see docs/WASHER-POOLING.md)."
+      "Fixture: clothing washer."
     )
   end)
 end

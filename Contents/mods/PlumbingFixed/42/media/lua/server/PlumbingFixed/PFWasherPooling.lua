@@ -53,7 +53,7 @@ local function findRunningWasherBelow(barrel)
         local objects = below:getObjects()
         for j = 0, objects:size() - 1 do
           local obj = objects:get(j)
-          if obj ~= nil and isMultiSource(obj) and isRunningWasher(obj) then
+          if obj ~= nil and isRunningWasher(obj) and isMultiSource(getPlumbedSources(obj)) then
             return obj
           end
         end
@@ -140,7 +140,7 @@ Events.OnWaterAmountChange.Add(function(object, previousAmount)
   end
 
   local washer = findRunningWasherBelow(object)
-  if washer == nil or not isMultiSource(washer) then
+  if washer == nil or not isMultiSource(getPlumbedSources(washer)) then
     return
   end
 

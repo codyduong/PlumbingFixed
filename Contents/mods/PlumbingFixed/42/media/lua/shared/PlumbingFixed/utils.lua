@@ -1,6 +1,11 @@
+--- Patch based on PFPooledPrimitives
+--- @class IsoObject
+--- @field __PFraw PFRawBound
+
 ---@param waterObject IsoObject
+---@param predicate fun(src: IsoObject): boolean
 ---@return IsoObject[]
-function getPlumbedSources(waterObject)
+function getPlumbedSources(waterObject, predicate)
   local sources = {}
   if not isPlumbed(waterObject) then
     return sources
@@ -15,45 +20,87 @@ function getPlumbedSources(waterObject)
     for iy = -1, 1 do
       local src = findPlumbedSourceAt(x + ix, y + iy, z + 1)
       if src ~= nil then
-        table.insert(sources, src)
+        if predicate and predicate(src) or true then
+          table.insert(sources, src)
+        end
       end
     end
   end
   return sources
 end
 
+--- Drawable water-category fluid across the pool (the subset removeWaterTopDown moves).
 --- @param waterObject IsoObject
 --- @return number
 function getPlumbedWaterAmount(waterObject)
   local sources = getPlumbedSources(waterObject)
-  local amount = 0.0
+  if not isMultiSource(sources) then
+    return getWaterAmount(waterObject)
+  end
 
+  local amount = 0.0
   for _, src in ipairs(sources) do
     amount = amount + getWaterAmount(src)
   end
-  if amount == 0.0 then
-    amount = getWaterAmount(waterObject)
+  return amount
+end
+
+--- Vanilla-parity getFluidAmount(): total fluid of any type across the pool.
+--- @param waterObject IsoObject
+--- @return number
+function getPlumbedFluidAmount(waterObject)
+  local sources = getPlumbedSources(waterObject)
+  if not isMultiSource(sources) then
+    return waterObject.__PFraw:getFluidAmount()
   end
 
+  local amount = 0.0
+  for _, src in ipairs(sources) do
+    amount = amount + src:getFluidAmount()
+  end
   return amount
+end
+
+--- Vanilla-parity hasWater(): fluid present and every non-empty source is entirely
+--- water-category.
+--- @param waterObject IsoObject
+--- @return boolean
+function hasPlumbedWater(waterObject)
+  local sources = getPlumbedSources(waterObject)
+  if not isMultiSource(sources) then
+    return waterObject.__PFraw:hasWater()
+  end
+
+  local hasAny = false
+  for _, src in ipairs(sources) do
+    local container = src:getFluidContainer()
+    if container:getAmount() > 0 then
+      if not container:isAllCategory(FluidCategory.Water) then
+        return false
+      end
+      hasAny = true
+    end
+  end
+  return hasAny
 end
 
 --- @param waterObject IsoObject
 --- @return number
 function getPlumbedWaterCapacity(waterObject)
   local sources = getPlumbedSources(waterObject)
-  local capacity = 0.0
+  if not isMultiSource(sources) then
+    return waterObject:getFluidCapacity()
+  end
 
+  local capacity = 0.0
   for _, src in ipairs(sources) do
     capacity = capacity + src:getFluidCapacity()
   end
-  if capacity == 0.0 then
-    capacity = waterObject:getFluidCapacity()
-  end
-
   return capacity
 end
 
+--- Water-category fluid in the object's own container. Reserve-water sources (no
+--- container, e.g. bathtubs) report through getFluidAmount().
 --- @param waterObject IsoObject
 --- @return number
 function getWaterAmount(waterObject)
@@ -78,17 +125,14 @@ function removeWaterTopDown(waterObject, amount)
     DebugType.Mod,
     "PlumbingFixed (utils) - removeWaterTopDown called with: " .. waterObject:toString() .. ", " .. tostring(amount)
   )
-  local srcs = getPlumbedSources(waterObject)
-
-  if #srcs == 0 then
-    local container = waterObject:moveFluidToTemporaryContainer(amount)
-    return container
+  local sources = getPlumbedSources(waterObject)
+  if not isMultiSource(sources) then
+    return waterObject.__PFraw:moveFluidToTemporaryContainer(amount)
   end
 
   --- @type table<number, { obj: IsoObject, amt: number }>
   local list = {}
-  for _, src in ipairs(srcs) do
-    --- @cast src IsoObject
+  for _, src in ipairs(sources) do
     table.insert(list, { obj = src, amt = getWaterAmount(src) })
   end
 
@@ -169,6 +213,63 @@ function drawFromPool(waterObject, amount)
   return removeWaterTopDown(waterObject, amount)
 end
 
+--- Vanilla-parity useFluid(): pooled draw clamped to drawable water.
+--- @param waterObject IsoObject
+--- @param amount number
+--- @return number used
+function usePlumbedFluid(waterObject, amount)
+  if not isMultiSource(getPlumbedSources(waterObject)) then
+    return waterObject.__PFraw:useFluid(amount)
+  end
+
+  local used = math.max(0, math.min(amount, getPlumbedWaterAmount(waterObject)))
+  if used > 0 then
+    FluidContainer.DisposeContainer(drawFromPool(waterObject, used))
+  end
+  return used
+end
+
+--- Vanilla-parity moveFluidToTemporaryContainer(): drains the pool, hands back clean
+--- Water (vanilla likewise purifies external-source draws).
+--- @param waterObject IsoObject
+--- @param amount number
+--- @return FluidContainer container Java-managed; the caller must dispose it
+function movePlumbedFluidToTemporaryContainer(waterObject, amount)
+  if not isMultiSource(getPlumbedSources(waterObject)) then
+    return waterObject.__PFraw:moveFluidToTemporaryContainer(amount)
+  end
+
+  local transferAmount = math.max(0, math.min(amount, getPlumbedWaterAmount(waterObject)))
+  if transferAmount > 0 then
+    FluidContainer.DisposeContainer(drawFromPool(waterObject, transferAmount))
+  end
+  local container = FluidContainer.CreateContainer()
+  container:setCapacity(transferAmount)
+  container:addFluid(Fluid.Water, transferAmount)
+  return container
+end
+
+--- Vanilla-parity transferFluidTo(): drains the pool, adds clean Water to the target.
+--- @param waterObject IsoObject
+--- @param target FluidContainer
+--- @param amount number
+--- @return number used
+function transferPlumbedFluidTo(waterObject, target, amount)
+  if not isMultiSource(getPlumbedSources(waterObject)) then
+    return waterObject.__PFraw:transferFluidTo(target, amount)
+  end
+  if target == nil then
+    return 0
+  end
+
+  local used = math.max(0, math.min(amount, target:getFreeCapacity(), getPlumbedWaterAmount(waterObject)))
+  if used > 0 then
+    FluidContainer.DisposeContainer(drawFromPool(waterObject, used))
+    target:addFluid(Fluid.Water, used)
+  end
+  return used
+end
+
 --- @param x number
 --- @param y number
 --- @param z number
@@ -218,8 +319,8 @@ function PFIsAdmin(player)
   return role ~= nil and role:getName() == "admin"
 end
 
---- @param waterObject IsoObject?
+--- @param sources IsoObject[]
 --- @return boolean
-function isMultiSource(waterObject)
-  return (waterObject and isPlumbed(waterObject) and #getPlumbedSources(waterObject) > 1) or false
+function isMultiSource(sources)
+  return #sources > 1
 end

@@ -4,15 +4,15 @@ require("PlumbingFixed/utils")
 -- B42.19 builds the fixture water menu in native Java (zombie/iso/ISWorldObjectContextMenuLogic).
 -- It gates and labels each option from the fixture's OWN fluid amount, which for a plumbed
 -- fixture resolves to a SINGLE found barrel (IsoObject.getFluidAmount -> checkExternalFluidSource),
--- not the pooled 3x3 total this mod draws from. The timed actions we override already draw
--- pooled, but two things are still computed from that one barrel and are wrong for us:
+-- not the pooled 3x3 total this mod draws from. The patched primitives already pool the
+-- Lua side, but two things are still computed Java-side from that one barrel:
 --   * the Drink / Wash tooltip water figures (cosmetic under-report), and
 --   * the Wash "not available" grey-out (functional: a near-empty lead barrel disables washing
 --     even when the pool has plenty).
 -- The Java menu fires OnFillWorldObjectContextMenu *after* it is built, so we post-process it
 -- here: find the plumbed fixture, then rewrite the affected options in place. We do NOT rebuild
--- the menu (it is native) and we do NOT re-route the actions (our timed-action overrides handle
--- the pooled draw). See docs/ARCHITECTURE.md.
+-- the menu (it is native) and we do NOT re-route the actions (the pooled draw happens in the
+-- patched primitives). See docs/ARCHITECTURE.md.
 --
 -- Options are identified by their bound callback (robust across locales). Java adds them via
 -- ISContextMenuWrapper.addGetUpOption, which stores the real callback in `option.param1` (the
@@ -21,9 +21,6 @@ require("PlumbingFixed/utils")
 
 local WATER_LABEL = getText("ContextMenu_WaterName")
 
---- Debug-only sanity marker: lets us (and users running -debug) assert which options the
---- mod rewrote. Invariant: unplumbed fixtures never get this marker because none of the
---- fix* functions run for them.
 --- @param tt table
 local function markModified(tt)
   if getDebug() then
@@ -125,8 +122,10 @@ Events.OnFillWorldObjectContextMenu.Add(function(_player, context, worldObjects,
     return
   end
   local waterObject = findWaterObject(worldObjects)
-  if not waterObject or not isMultiSource(waterObject) then
+  if not waterObject or not isMultiSource(getPlumbedSources(waterObject)) then
     return
   end
-  patchMenu(context, getPlumbedWaterAmount(waterObject), getPlumbedWaterCapacity(waterObject))
+  -- Total-fluid pooled figures, mirroring what the Java menu shows from its one barrel
+  -- (getFluidAmount is fluid-of-any-type; the vanilla tooltips make no water distinction).
+  patchMenu(context, getPlumbedFluidAmount(waterObject), getPlumbedWaterCapacity(waterObject))
 end)
