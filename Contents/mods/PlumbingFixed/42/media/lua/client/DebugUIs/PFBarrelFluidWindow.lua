@@ -6,9 +6,9 @@ local PAD = 10
 local BTN_H = FONT_HGT_SMALL + 6
 local ROW_H = BTN_H * 2 + PAD * 2
 
---- @class PFBarrelFluidWindow : ISCollapsableWindow
+--- @class PFBarrelFluidWindow: ISCollapsableWindow
 --- @field playerNum integer
---- @field barrelCoords { x: integer, y: integer, z: integer }[]
+--- @field barrelCoords { x: integer, y: integer, z: integer } []
 --- @field rows table[]
 --- @field instance PFBarrelFluidWindow?
 PFBarrelFluidWindow = ISCollapsableWindow:derive("PFBarrelFluidWindow")
@@ -148,8 +148,13 @@ function PFBarrelFluidWindow:createChildren()
     self:addChild(row.emptyButton)
     x = x + 56 + PAD
 
-    row.fluidBar =
-      ISFluidBar:new(self.width - PAD - (BTN_H * 2), y, BTN_H * 2, ROW_H - PAD, getSpecificPlayer(self.playerNum))
+    row.fluidBar = ISFluidBar:new(
+      self.width - PAD - (BTN_H * 2),
+      y,
+      BTN_H * 2,
+      ROW_H - PAD,
+      getSpecificPlayer(self.playerNum)
+    )
     row.fluidBar:initialise()
     row.fluidBar:setContainer(source and source:getFluidContainer() or nil)
     self:addChild(row.fluidBar)

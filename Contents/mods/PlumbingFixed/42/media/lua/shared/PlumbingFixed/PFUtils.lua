@@ -2,9 +2,9 @@
 --- @class IsoObject
 --- @field __PFraw PFRawBound
 
----@param waterObject IsoObject
----@param predicate? fun(src: IsoObject): boolean
----@return IsoObject[]
+--- @param waterObject IsoObject
+--- @param predicate? fun(src: IsoObject): boolean
+--- @return IsoObject[]
 function getPlumbedSources(waterObject, predicate)
   local sources = {}
   if not isPlumbed(waterObject) then

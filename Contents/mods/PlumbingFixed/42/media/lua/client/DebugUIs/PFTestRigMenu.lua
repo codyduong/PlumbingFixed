@@ -51,8 +51,7 @@ if isDebugEnabled() then
       option.toolTip:initialise()
       option.toolTip:setVisible(false)
       option.toolTip:setName(name)
-      option.toolTip.description = getText("ContextMenu_PFSpawnRigTooltip", PFDebugRig.WIDTH, PFDebugRig.DEPTH)
-        .. " "
+      option.toolTip.description = getText("ContextMenu_PFSpawnRigTooltip", PFDebugRig.WIDTH, PFDebugRig.DEPTH) .. " "
         .. fixtureDesc
     end
 

@@ -19,8 +19,8 @@ windows_default_inline_shell_args = "pwsh -NoProfile -Command"
 experimental = true
 
 [tools]
-stylua = "2.3.1"
-"cargo:emmylua_check" = "0.18.0"
+"cargo:emmylua_formatter" = "0.24.0"
+"cargo:emmylua_check" = "0.24.0"
 java = "temurin-17"
 age = "1.3.1"
 
@@ -29,7 +29,7 @@ STEAM_USERNAME = { required = "Set STEAM_USERNAME to your Steam username in mise
 STEAM_PASSWORD = { required = "Set STEAM_PASSWORD to your Steam password in mise.local.toml" }
 
 [tasks.check]
-description = "Lint + type-check Lua (stylua + emmylua_check); mirrors CI"
+description = "Lint + type-check Lua (luafmt + emmylua_check); mirrors CI"
 run = "& scripts/check.ps1"
 
 [tasks.decompile]

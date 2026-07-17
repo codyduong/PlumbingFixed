@@ -1,0 +1,31 @@
+# luafmt (emmylua_formatter) — only deviations from `luafmt --dump-default-config`.
+[syntax]
+level = "Lua51"
+
+[indent]
+width = 2
+
+[layout]
+prefer_call_args_layout_from_source = true
+prefer_table_layout_from_source = true
+prefer_chain_break_on_statement_tail = true
+prefer_binary_chain_operand_per_line = true
+
+[spacing]
+space_before_func_paren = false
+space_before_lambda_func_paren = false
+
+[output]
+trailing_comma = "Never"
+trailing_table_separator = "Multiline"
+quote_style = "Double"
+line_comment_min_spaces_before = 1
+line_comment_min_column = 5
+
+[emmy_doc]
+align_tag_columns = false
+align_declaration_tags = false
+align_reference_tags = false
+align_multiline_alias_descriptions = false
+space_after_description_dash = true
+space_between_tag_columns = true

@@ -18,13 +18,13 @@ function Test-Tool {
   }
 }
 
-Test-Tool stylua        "Run 'mise install' (or: cargo install stylua --version 2.3.1)."
+Test-Tool luafmt        "Run 'mise install' (or: cargo install emmylua_formatter --version 0.24.0)."
 Test-Tool emmylua_check "Run 'mise install' (or: cargo install emmylua_check --version 0.18.0)."
 
 $failed = $false
 
-Write-Host "==> stylua --check --syntax Lua51 ." -ForegroundColor Cyan
-stylua --check --syntax Lua51 .
+Write-Host "==> luafmt . --check" -ForegroundColor Cyan
+luafmt . --check
 if ($LASTEXITCODE -ne 0) { $failed = $true }
 
 Write-Host "==> emmylua_check . -c .emmyrc.json" -ForegroundColor Cyan

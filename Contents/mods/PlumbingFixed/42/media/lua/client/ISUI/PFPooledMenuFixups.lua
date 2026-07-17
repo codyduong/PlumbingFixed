@@ -40,7 +40,8 @@ local function fixDrinkTooltip(option, pooled, pooledCap)
   local replaced
   tt.description, replaced = tt.description:gsub("[%d%.]+L%s*/%s*[%d%.]+L", function()
     return string.format("%.2fL / %.2fL", pooled, pooledCap)
-  end, 1)
+  end, 1
+  )
   if replaced > 0 then
     markModified(tt)
   end
@@ -73,7 +74,8 @@ local function fixWashOption(option, pooled, yourself)
   local shown = string.format("%.2f", math.min(pooled, req))
   tt.description = tt.description:gsub(WATER_LABEL .. ":%s*[%d%.]+%s*/%s*[%d%.]+", function()
     return WATER_LABEL .. ": " .. shown .. " / " .. required
-  end, 1)
+  end, 1
+  )
   markModified(tt)
 end
 

@@ -29,19 +29,19 @@ debugScenarios.DebugPlumbing = {
     chr:getInventory():AddItem("Base.PipeWrench")
     for i = 1, 3 do
       local bottle = chr:getInventory():AddItem("Base.WaterDispenserBottle")
-      ---@cast bottle InventoryItem
+      --- @cast bottle InventoryItem
       bottle:getFluidContainer():removeFluid(i * 5)
       chr:getInventory():AddItem("Base.BandageDirty")
     end
 
     local shirt = chr:getInventory():AddItem("Base.Shirt_HawaiianRed")
-    ---@cast shirt Clothing
+    --- @cast shirt Clothing
     shirt:addRandomDirt()
     shirt:addRandomBlood()
     chr:setWornItem(shirt:getBodyLocation(), shirt)
 
     local clothe = inv:AddItem("Base.Trousers_Denim")
-    ---@cast clothe Clothing
+    --- @cast clothe Clothing
     clothe:getVisual():setTextureChoice(2)
     clothe:addRandomBlood()
     clothe:addRandomBlood()

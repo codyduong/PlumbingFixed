@@ -42,19 +42,14 @@ jobs:
         if: steps.cache-cargo.outputs.cache-hit != 'true'
         run: cargo install emmylua_check
 
+      - name: Install EmmyLua Formatter
+        if: steps.cache-cargo.outputs.cache-hit != 'true'
+        run: cargo install emmylua_formatter --version 0.24.0
+
       - name: Validate Lua Files
         working-directory: .
         run: emmylua_check . -c .emmyrc.json
 
-  stylua:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Stylua
-        uses: JohnnyMorganz/stylua-action@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: v2.3.1
-          args: --check --syntax Lua51 .
+      - name: Check Formatting
+        working-directory: .
+        run: luafmt . --check

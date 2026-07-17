@@ -51,13 +51,13 @@ All tooling is pinned in [`mise.toml`](mise.toml). One-time: install
 [mise](https://mise.jdx.dev) (`winget install jdx.mise`), then:
 
 ```
-mise install          # provisions stylua 2.3.1, emmylua_check 0.18.0, Temurin JDK 17 (decompiler)
+mise install          # provisions emmylua_formatter 0.24.0 (luafmt), emmylua_check 0.18.0, Temurin JDK 17 (decompiler)
 mise tasks            # list workflows;  `mise run <task> --help` shows a task's arguments
 ```
 
 | Task | What it does |
 |------|--------------|
-| `mise run check` | stylua + emmylua_check (mirrors CI `.github/workflows/lua.yml`) |
+| `mise run check` | luafmt + emmylua_check (mirrors CI `.github/workflows/lua.yml`) |
 | `mise run decompile` | Decompile the installed game into `.decompiled/` for analysis |
 | `mise run bump 1.3.14` | Set `modversion` in both `mod.info` files |
 | `mise run package v1.3.14` | Validate versions + assemble `dist/PlumbingFixed` |
@@ -69,7 +69,7 @@ Each task shells out to a PowerShell `scripts/<name>.ps1`, which you can also ru
 (`pwsh -File scripts/<name>.ps1`). The one exception is `scripts/package.sh` — a CI-only
 twin of `package.ps1` for the Linux release job; keep the two identical when touching packaging.
 Task arguments are declared with mise's `usage` spec, so `mise run bump --help` documents them.
-`emmylua_check`/`stylua` must be on PATH (that's what `mise install` guarantees).
+`emmylua_check`/`luafmt` must be on PATH (that's what `mise install` guarantees).
 
 **Secrets / local overrides:** `cp mise.local.toml.example mise.local.toml` and set
 `STEAM_USERNAME` + `STEAM_PASSWORD` (and optional `PZ_HOME`, `ZOMBOID_DIR`, item ids).
@@ -142,8 +142,10 @@ Keep these three aligned with the installed build. When the game updates, follow
 
 ## Conventions
 
-- **Formatting:** stylua, **Lua 5.1**, 2-space indent (`.stylua.toml`). Build output is
-  ignored via `.styluaignore`.
+- **Formatting:** luafmt (`emmylua_formatter`, same ecosystem as `emmylua_check`), **Lua
+  5.1**, 2-space indent (`.luafmt.toml` holds only deviations from `luafmt
+  --dump-default-config`). Build output is ignored via `.luafmtignore`. It also formats
+  EmmyLua doc comments (tag alignment, `---@tag` normalization) — don't fight the aligner.
 - **Types:** EmmyLua annotations (`---@param`, `---@return`, `---@class`, `---@cast`);
   config in `.emmyrc.json`. `mise run check` must pass before commit (CI enforces it).
 - **Naming:** mod-owned globals/files are prefixed `PF` / `getPlumbed*`. Overrides keep the

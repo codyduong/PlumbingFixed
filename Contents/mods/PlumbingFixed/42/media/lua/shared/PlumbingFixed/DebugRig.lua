@@ -89,7 +89,7 @@ local function CreateBarrel(sq, spriteName, health)
   -- missing script as an error — a silent skip here is how rig barrels ended up with no
   -- fluid capacity.
   local info = SpriteConfigManager.getObjectInfoFromSprite(spriteName)
-  ---@diagnostic disable-next-line: unnecessary-if
+  --- @diagnostic disable-next-line: unnecessary-if
   if info and info:getScript() and info:getScript():getParent() then
     local gameEntityScript = info:getScript():getParent()
     local isFirstTimeCreated = true
@@ -305,7 +305,7 @@ function PFDebugRig.build(x, y, z, plumbed, fixture)
   table.insert(barrels, createBarrelOnSq(x + 2, y, z + 1, "carpentry_02_54"))
   table.insert(barrels, createBarrelOnSq(x + 2, y + 1, z + 1, "carpentry_02_120"))
 
-  ---@diagnostic disable-next-line: unnecessary-if -- checker over-narrows `fixture or "sink"`
+  --- @diagnostic disable-next-line: unnecessary-if -- checker over-narrows `fixture or "sink"`
   if fixture == "washer" then
     createWasherOnSq(x + 1, y + 1, z, plumbed)
     createGeneratorOnSq(x + GENERATOR_OFFSET_X, y + GENERATOR_OFFSET_Y, z)

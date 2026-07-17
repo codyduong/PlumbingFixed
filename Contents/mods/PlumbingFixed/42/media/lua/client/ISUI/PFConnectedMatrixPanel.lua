@@ -43,12 +43,8 @@ local function menuHasFluidOption(menu)
     -- Same identification as PFPooledMenuFixups: the Java-built fixture options carry
     -- their real handler in param1 (addGetUpOption wrapper), Empty in onSelect.
     local callback = option.param1
-    if
-      callback == ISWorldObjectContextMenu.onDrink
-      or callback == ISWorldObjectContextMenu.onWashClothing
-      or callback == ISWorldObjectContextMenu.onWashYourself
-      or option.onSelect == ISWorldObjectContextMenu.onFluidEmpty
-    then
+    if callback == ISWorldObjectContextMenu.onDrink or callback == ISWorldObjectContextMenu.onWashClothing
+      or callback == ISWorldObjectContextMenu.onWashYourself or option.onSelect == ISWorldObjectContextMenu.onFluidEmpty then
       return true
     end
   end
@@ -78,14 +74,14 @@ end
 
 --- One grid square of the pool. An ISButton for its hover/tooltip/click plumbing, but
 --- entirely custom-drawn (render is overridden; the button chrome is disabled).
---- @class PFMatrixCell : ISButton
+--- @class PFMatrixCell: ISButton
 --- @field coords { x: integer, y: integer, z: integer }
 --- @field source IsoObject? re-resolved every frame by the panel
 --- @field capacity number
 --- @field parent PFConnectedMatrixPanel
 PFMatrixCell = ISButton:derive("PFMatrixCell")
 
---- @class PFConnectedMatrixPanel : ISPanel
+--- @class PFConnectedMatrixPanel: ISPanel
 --- @field playerNum integer
 --- @field context ISContextMenu
 --- @field watchMenu ISContextMenu the fixture's fluid submenu; the grid shows only while it does
@@ -193,9 +189,9 @@ end
 --- Pooled-total bar spanning the grid: every connected barrel's fluid combined, drawn as
 --- stacked segments separated by fluid type (registry order; no numbers — the hover
 --- tooltip carries them). An ISButton purely for its tooltip plumbing; it has no click.
---- @class PFPoolBar : ISButton
+--- @class PFPoolBar: ISButton
 --- @field vertical boolean
---- @field segments { color: Color, amount: number }[]
+--- @field segments { color: Color, amount: number } []
 --- @field capacity number
 PFPoolBar = ISButton:derive("PFPoolBar")
 
