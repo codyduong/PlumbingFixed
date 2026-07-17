@@ -3,8 +3,9 @@
 # Ephemeral dedicated-server world/state (scripts/testhost.ps1; seed configs in testhost/)
 /.testhost/
 
-# Decompiled game source (analysis only, produced by scripts/decompile.ps1)
-/.decompiled/
+# Decompiled game source (analysis only, produced by scripts/decompile.ps1); suffixed
+# copies are previous-build snapshots kept during an update (docs/UPDATING-PZ.md)
+/.decompiled*/
 # Downloaded dev tools (e.g. Zomboid Decompiler)
 /.tools/
 # Steam Workshop publish scratch (generated VDF, steamcmd logs)

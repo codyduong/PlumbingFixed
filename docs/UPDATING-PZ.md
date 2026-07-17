@@ -1,27 +1,21 @@
 # Updating to a new Project Zomboid build
 
-Run this when PZ ships a new build and we want to target it. The mod **overrides vanilla Lua
-by name**, so a new build can silently change a function we patched. We defend against that with
-a **committed vendored baseline** of the exact vanilla functions we override
-(`vendor/pz/<VERSION>/`), so an update becomes a normal 3-way merge instead of a hand-copy.
+Run this when PZ ships a new build and we want to target it. The mod's override surface is
+**Java behavior intercepted at the Lua dispatch seam** — the six fluid primitives patched
+onto `IsoObject`/`IsoThumpable` in `PFPooledPrimitives.lua`, the native fixture menu
+post-processed by `PFPooledMenuFixups.lua`, and the washer machinery compensated by
+`PFWasherPooling.lua` — plus shared utils that read vanilla state. No vanilla Lua function
+ships as a modified copy, so reconciling an update means **diffing the decompiled Java (and
+the vanilla Lua callers) between builds**, not merging function bodies.
 
-## How the baseline works
-
-- `vendor/pz/overrides.manifest` — the source of truth for *which* vanilla functions we shadow.
-  TAB-separated: `<vanilla path under media/lua>\t<space-separated function names>`.
-- `vendor/pz/VERSION` — the build the committed baseline was extracted from (e.g. `42.19`).
-- `vendor/pz/<VERSION>/<path>` — verbatim vanilla source of just those functions. **Never
-  hand-edit or reformat these** — they must stay byte-identical to vanilla so merges are clean
-  (they're excluded from stylua/emmylua via `.styluaignore` + `.emmyrc.json`).
-- `mise run vanilla-extract` regenerates the baseline from the installed game (idempotent).
-- `mise run vanilla-diff` extracts the manifest functions from the **current** install and
-  `git diff`s them against the committed baseline — one command to see upstream drift.
-
-> The menu layer is **not** in the manifest. As of B42.19 the fixture water menu is built in
-> native Java (`zombie/iso/ISWorldObjectContextMenuLogic`), which binds Drink/Fill/Wash/Clean
-> options to our Lua handlers by name and routes them into the timed actions we already
-> override. So we override at the **action seam**, not the menu — there is nothing to vendor
-> for it. See [ARCHITECTURE.md](ARCHITECTURE.md).
+> History: through v2.1.0 the mod shipped modified copies of three vanilla timed actions
+> (`ISTakeWaterAction`, `ISWashClothing`, `ISCleanBandage`) and kept a per-build vendored
+> baseline (`vendor/pz/` + `mise run vanilla-extract`/`vanilla-diff`) as the ancestor for
+> 3-way merges on update. The v2.1.0 switch to patching the fluid primitives removed every
+> forked vanilla function, so the baseline and its tooling were retired — they live in git
+> history if the mod ever forks vanilla Lua again. Steam offers no per-version depots
+> (only `public`/`unstable`/`outdatedunstable` branches), so the local snapshots below are
+> the only reliable old-build reference.
 
 ## 0. Confirm the installed build
 
@@ -30,9 +24,24 @@ a **committed vendored baseline** of the exact vanilla functions we override
   `F:\steamlibrary\steamapps\common\ProjectZomboid\projectzomboid.jar`, or the Steam
   `appmanifest_108600.acf` (`buildid`, `LastUpdated`, `BetaKey`). Launch once to refresh
   `version.txt` if you want the exact `42.x.y` string.
-- The vanilla Lua we override is whatever is installed at `...\ProjectZomboid\media\lua`.
+- The vanilla Lua we intercept is whatever is installed at `...\ProjectZomboid\media\lua`.
 
-## 1. Align the type stubs (Umbrella submodule)
+## 1. Snapshot the old build BEFORE Steam updates it
+
+The update process needs the *previous* build to diff against, and Steam overwrites the
+install in place. While the old build is still installed:
+
+```
+Rename-Item .decompiled .decompiled-<old-build>          # e.g. .decompiled-42.19
+Copy-Item F:\steamlibrary\steamapps\common\ProjectZomboid\media\lua `
+          .decompiled-<old-build>\media-lua -Recurse     # the Lua callers, same snapshot
+```
+
+Both stay local (`.decompiled*/` is gitignored). If Steam already updated and you have no
+old decompile, the previous build is only recoverable via SteamDB manifest IDs +
+DepotDownloader with a logged-in owning account — avoid needing that.
+
+## 2. Align the type stubs (Umbrella submodule)
 
 ```
 git -C Umbrella fetch --tags
@@ -42,72 +51,48 @@ git add Umbrella
 Pick the Umbrella tag matching the installed build. `mise run check` uses these stubs, so a
 mismatch produces false type errors.
 
-## 2. Re-decompile the game
+## 3. Re-decompile the new build
 
 ```
 mise run decompile        # -> .decompiled/ (bump -DecompilerVersion if needed)
 ```
 This is the authoritative source for **behavior** (client vs server vs synced) — signatures
-from Umbrella are not enough. This is also where you confirm whether a menu/handler still lives
-in Lua or has moved into Java for this build.
+from Umbrella are not enough. This is also where you confirm whether a menu/handler still
+lives in Lua or has moved into Java for this build.
 
-## 3. See what drifted
-
-```
-mise run vanilla-diff
-```
-This prints, per overridden function, how the newly-installed vanilla differs from our committed
-baseline. Three cases:
-
-- **No diff** — vanilla is unchanged; our override needs no reconciliation.
-- **Diff** — vanilla changed; do a 3-way merge (step 4).
-- **Function missing** (extract flags it) — vanilla refactored or removed it (e.g. moved into
-  Java). This is a **re-derivation**: read `.decompiled/` to find where the behavior went and
-  what seam replaces it, rather than merging.
-
-## 4. Merge each changed function (Path A)
-
-For a low-drift function, let git do the 3-way merge instead of eyeballing it. Base = the
-committed baseline, *ours* = our override file, *theirs* = the new vanilla:
+## 4. Diff the override surface
 
 ```
-git merge-file -p \
-  Contents/mods/.../PFTakeWaterAction.lua \      # ours
-  vendor/pz/<VERSION>/shared/TimedActions/ISTakeWaterAction.lua \   # base
-  <new-vanilla>/shared/TimedActions/ISTakeWaterAction.lua \         # theirs
-  > merged && mv merged Contents/mods/.../PFTakeWaterAction.lua
+git diff --no-index .decompiled-<old-build>/source .decompiled/source -- <file>
 ```
-Resolve any conflict markers, keeping the pooled-water behavior and the "early-return to
-`original` when not plumbed" guard so unplumbed flows stay vanilla. Verify authority in
-`.decompiled/` for anything touching water state (per the golden rule in
-[CLAUDE.md](../CLAUDE.md)) — SP and MP can run the same method on different sides.
 
-## 5. Prefer wrapping over copying (Path C)
+Files that matter, mapped to what they can break:
 
-Whenever the new vanilla exposes a seam that lets us **delegate to the captured original**
-instead of re-pasting its body, take it — it shrinks what we have to re-merge next time.
-Concretely: capture `local original = { method = ISFoo.method }`, then in our override handle
-only the plumbed case and `return original.method(self, ...)` otherwise. If a function drops
-out of the manifest this way (we no longer copy its body), remove it from
-`vendor/pz/overrides.manifest`. The B42.19 menu removal is the extreme case of this — the whole
-menu file went away because Java now drives it into our action overrides.
+- `zombie/iso/IsoObject.java` — the six patched primitives (`getFluidAmount`, `hasFluid`,
+  `hasWater`, `useFluid`, `moveFluidToTemporaryContainer`, `transferFluidTo`) and the
+  external-water-source state (`PFPooledPrimitives.lua`, `PFUtils.lua`).
+- `zombie/iso/objects/IsoThumpable.java` — the same primitives on player-built objects.
+- `zombie/iso/ISWorldObjectContextMenuLogic.java` — the native fixture menu whose options
+  and tooltips `PFPooledMenuFixups.lua` rewrites (option names/params are matched by
+  handler identity) and `PFConnectedMatrixPanel.lua` docks against.
+- `zombie/iso/objects/IsoClothingWasher.java` (and dryer) — the Java-side water draws that
+  `PFWasherPooling.lua` redistributes via `OnWaterAmountChange`.
+- `media/lua` timed actions (diff the snapshot against the new install) — we don't fork
+  them, but they are the Lua dispatch through which our patched primitives are reached:
+  confirm they still call the fixture's methods (`obj:useFluid(...)` etc.) rather than a
+  new Java path.
 
-## 6. Re-baseline and commit
+Three outcomes per spot:
 
-Once the overrides compile and behave:
+- **No diff** — nothing to do.
+- **Diff** — vanilla behavior changed; reconcile the affected guard/util/post-processor.
+  Verify authority per side in the new `.decompiled/` (golden rule in
+  [CLAUDE.md](../CLAUDE.md)) — never adjust a predicate just until it goes green.
+- **Seam moved** — a caller left Lua for Java (the B42.19 menu is the precedent). That's a
+  re-derivation: find where the behavior went and what seam replaces it; expect to extend
+  the post-processor/event side rather than the primitives.
 
-```
-# update vendor/pz/VERSION to the new build, and overrides.manifest if the set of
-# overridden functions changed, then:
-mise run vanilla-extract        # regenerate vendor/pz/<VERSION>/ from the install
-mise run check                  # stylua + emmylua_check must pass
-git add vendor/ Contents/ Umbrella
-```
-Re-running `vanilla-extract` must produce **no** further git diff (idempotent). Commit the new
-baseline together with the reconciled overrides so the *next* update is a clean merge against
-this build.
-
-## 7. Update the build markers (only if the minimum target changed)
+## 5. Update the build markers (only if the minimum target changed)
 
 If we now require the newer build, update the PZ-build strings (these are **not** the mod
 semver):
@@ -116,7 +101,9 @@ semver):
 - `workshop/workshop.vdf` → the `title=... [B42.<x>+]` and "TESTED/VERIFIED WORKING IN
   B42.<x>" lines.
 
-## 8. Test + release
+## 6. Test, clean up, release
 
-- Full SP + MP pass per [TESTING.md](TESTING.md), including the unplumbed regression case.
+- `mise run check`, then a full SP + MP pass per [TESTING.md](TESTING.md), including the
+  unplumbed regression case.
+- Delete `.decompiled-<old-build>/` once the update is reconciled and released.
 - Then follow [RELEASING.md](RELEASING.md) (bump semver → tag → GitHub release → publish).

@@ -8,14 +8,12 @@
     "ignoreDir": [
       "dist",
       ".testhost",
-      ".tools",
-      "vendor"
+      ".tools"
     ],
     "ignoreGlobs": [
       "dist/**",
       ".testhost/**",
-      ".tools/**",
-      "vendor/**"
+      ".tools/**"
     ]
   },
   "diagnostics": {

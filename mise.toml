@@ -79,11 +79,3 @@ description = "Run an ephemeral local dedicated server for MP testing (state in 
 raw = true
 usage = 'flag "--reset" help="Delete the .testhost world and reprovision from testhost/ seeds"'
 run = '& scripts/testhost.ps1 -Reset:($env:usage_reset -eq "true")'
-
-[tasks.vanilla-extract]
-description = "Extract overridden vanilla fns into vendor/pz/<VERSION>/ (baseline for 3-way merges)"
-run = "& scripts/vanilla-extract.ps1"
-
-[tasks.vanilla-diff]
-description = "Show how installed vanilla drifted from the committed baseline (overridden fns)"
-run = "& scripts/vanilla-diff.ps1"

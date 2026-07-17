@@ -1,5 +1,4 @@
 Umbrella/**/*
-vendor/**/*
 dist/**/*
 # PZ server config format (4-space), not mod code
 testhost/**/*
