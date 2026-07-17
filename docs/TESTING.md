@@ -29,18 +29,22 @@ Launch PZ in **debug mode** (Steam → PZ → Properties → Launch Options: add
   with staggered tainted water, plumbed sink, stairs) and an **unplumbed control** rig
   (fluid-cocktail barrel, vanilla-behaving sink), plus a dirty/bloody loadout for wash
   testing. Start location `x8350 y7190 z0`.
-- The **"Connected Sources"** right-click inspector (`PFPlumbedConnectedMenu.lua`) — shows
-  each barrel's fluid/capacity/tainted state and the pooled totals, and holds
-  **"Configure Barrel Fluids..."**, which opens a per-barrel editor
-  (`PFBarrelFluidWindow.lua`: fluid picker + amount + Add/Empty + live fluid bar) so you can
-  set up any fluid scenario without rebuilding the rig.
+- The **Connected Barrels grid** (`PFConnectedMatrixPanel.lua`) — docks beside the
+  right-click menu on any pooled fixture (two or more connected barrels; for every player,
+  not just debug): a 3×3 grid of
+  capacity-scaled fluid bars plus a pooled-total bar (stacked per-fluid segments; position
+  set by mod option, default right); hovering a cell or the bar shows concrete per-fluid
+  amounts, and hovering a cell highlights that barrel's world sprite. In debug/admin,
+  **clicking a cell opens the per-barrel fluid editor** (`PFBarrelFluidWindow.lua`: fluid
+  picker + amount + Add/Empty + live fluid bar) for that barrel, so you can set up any
+  fluid scenario without rebuilding the rig.
 - The **debug tooltip marker** — rewritten Drink/Wash tooltips carry
   "Modified by Plumbing Fixed". **Invariant check: the unplumbed control sink must NEVER
   show the marker** (the mod must not touch unplumbed behavior).
 
 Check, on the plumbed sink:
 - **Drink** and **Fill a container** — draws pull evenly from the fullest barrels (watch the
-  inspector totals drop across barrels, not one-at-a-time).
+  grid's bars drop across barrels, not one-at-a-time).
 - **Wash** (yourself / clothing / container / weapon) — consumes from the pool.
 - **Tainted → clean**: tainted barrels should yield clean water (purification in
   `removeWaterTopDown`).
@@ -77,10 +81,10 @@ mise run testhost --reset  # nuke .testhost\ and start a fresh world
   install the canary playground.
 - Connect from a **normally-launched** client (mod enabled from §1): Join → `127.0.0.1`,
   port `16261`, account **admin** / **pztest** (created on first boot via
-  `-adminusername`/`-adminpassword`). The admin role carries `UseDebugContextMenu`, so the
-  Connected Sources inspector, the fluid editor, and (with the mod option on) rig spawning
-  all work; rig builds and fluid edits are sent to the server via `sendClientCommand` and
-  re-validated there.
+  `-adminusername`/`-adminpassword`). The admin role carries `UseDebugContextMenu`, so
+  cell-click fluid editing in the Connected Barrels grid and (with the mod option on) rig
+  spawning both work; rig builds and fluid edits are sent to the server via
+  `sendClientCommand` and re-validated there.
 - Spawn a rig next to you (no teleporting needed), then repeat the §2 checks. Watch for
   behavior that works in SP but not MP — that's usually a predicate read on the wrong side.
 

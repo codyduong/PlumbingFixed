@@ -1,4 +1,4 @@
-modversion=2.1.0
+modversion=2.2.0-rc.1
 id=PlumbingFixed
 name=PlumbingFixed (B42.19)
 author=DuongC
@@ -6,3 +6,4 @@ description=
 poster=poster.png
 tags=Build 42
 versionMin=42.19
+incompatible=b42plumbingfix

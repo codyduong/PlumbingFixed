@@ -327,8 +327,7 @@ end
 --- @param waterObject IsoObject
 --- @return boolean
 function isPlumbed(waterObject)
-  local isPlumbedFlag = waterObject:getModData().canBeWaterPiped == false
-  return waterObject:getUsesExternalWaterSource() or isPlumbedFlag
+  return waterObject:getUsesExternalWaterSource()
 end
 
 --- @param player IsoPlayer?

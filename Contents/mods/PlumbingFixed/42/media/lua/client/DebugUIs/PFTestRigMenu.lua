@@ -1,8 +1,8 @@
 require("PlumbingFixed/DebugRig")
+require("PFModOptions")
 
 if isDebugEnabled() then
-  local options = PZAPI.ModOptions:create("PlumbingFixed", "Plumbing Fixed")
-  local spawnRigOption = options:addTickBox(
+  local spawnRigOption = PFModOptions.options:addTickBox(
     "spawnTestRig",
     getText("IGUI_PFSpawnTestRigOption"),
     false,

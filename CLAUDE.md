@@ -22,11 +22,13 @@ Real landmines already hit here:
 - `IsoObject:hasExternalWaterSource()` is **unreliable on the server** — the mod gates on
   `getUsesExternalWaterSource()` instead (via `isMultiSource` in `utils.lua`, the guard for
   every patched primitive in `PFPooledPrimitives.lua`).
-- `isPlumbed()` (our util) folds together `getUsesExternalWaterSource()` **OR**
-  `modData.canBeWaterPiped == false`. Which predicate is correct depends on **which side the
-  caller runs on**. This is now settled: every pooled code path guards through
-  `isMultiSource()` → `getUsesExternalWaterSource()` (server-authoritative).
-  See [KNOWN LANDMINES](#known-landmines).
+- `modData.canBeWaterPiped` sounds like a plumbed-state flag but tracks **Plumb-option
+  eligibility** (`false` = "plumb action consumed", not "is plumbed"). `isPlumbed()` (our
+  util) originally folded it in as an OR alongside `getUsesExternalWaterSource()`; the
+  disjunct was redundant (vanilla always writes both together) and a false-positive trap,
+  so it was dropped — `isPlumbed()` now reads `getUsesExternalWaterSource()` alone, and
+  every pooled code path guards through `isMultiSource()` → `getUsesExternalWaterSource()`
+  (server-authoritative). See [KNOWN LANDMINES](#known-landmines).
 
 **Before overriding or relying on any vanilla API, verify it three ways:**
 1. **Which vanilla dir defines the caller?** `client/` runs on the client, `server/` on the
@@ -101,12 +103,13 @@ Lua roots under `42/media/lua/`:
 | `shared/PlumbingFixed/PFPooledPrimitives.lua` | shared | patches the six fixture fluid primitives (`getFluidAmount`, `hasFluid`, `hasWater`, `useFluid`, `moveFluidToTemporaryContainer`, `transferFluidTo`) via `__classmetatables` on `IsoObject` + `IsoThumpable`, guarded by `isMultiSource`; the vanilla timed actions run untouched and pool through these |
 | `client/PlumbingFixedClient.lua` | client | `require`s the shared primitives patch on the client |
 | `client/ISUI/PFPooledMenuFixups.lua` | client | `OnFillWorldObjectContextMenu` post-processor: rewrites Drink/Wash tooltips + Wash grey-out to pooled totals; debug-mode "Modified by Plumbing Fixed" marker |
-| `client/DebugUIs/PFPlumbedConnectedMenu.lua` | client | debug "Connected Sources" inspector + "Configure Barrel Fluids..." |
-| `client/DebugUIs/PFBarrelFluidWindow.lua` | client | per-barrel fluid editor window (debug; MP edits go through the server) |
-| `client/DebugUIs/PFTestRigMenu.lua` | client | mod option (PZAPI.ModOptions) + "Spawn PlumbingFixed Test Rig" debug context option |
+| `client/PFModOptions.lua` | client | single `PZAPI.ModOptions` page: grid-axis tickbox + pool-bar position combo; debug options attach to it behind their own gate |
+| `client/ISUI/PFConnectedMatrixPanel.lua` | client | 3×3 connected-barrels grid docked to the world context menu (lives/dies with it): capacity-scaled fluid bars + a pooled-total bar (stacked per-fluid segments; left/right/top/bottom via mod option), hover = per-fluid tooltip + world-sprite highlight, debug/admin click opens the mod's per-barrel fluid editor (`PFBarrelFluidWindow`) for that barrel |
+| `client/DebugUIs/PFBarrelFluidWindow.lua` | client | per-barrel fluid editor window (fluid picker + amount + Add/Empty + live fluid bar), opened by a matrix cell click; MP edits go through the server commands |
+| `client/DebugUIs/PFTestRigMenu.lua` | client | debug "Spawn Test Rig" tickbox (on `PFModOptions`) + "Spawn PlumbingFixed Test Rig" debug context option |
 | `client/DebugUIs/Scenarios/DebugPlumbing.lua` | client | the `DebugPlumbing` test scenario (two rigs via `PFDebugRig` + loadout) |
 | `server/PlumbingFixed/PFWasherPooling.lua` | server | event-driven (`OnWaterAmountChange` + `EveryOneMinute`) pooling for running washers, whose draws happen Java-side and bypass the Lua primitives |
-| `server/PlumbingFixedServer.lua` | server | `require`s the shared primitives patch on the server; `OnClientCommand` handlers for rig spawn / barrel fluid edits (capability-gated) |
+| `server/PlumbingFixedServer.lua` | server | `require`s the shared primitives patch on the server; `OnClientCommand` handlers for rig spawn + barrel fluid edits (capability-gated; the fluid edits additionally admin-gated) |
 
 **Patch pattern**: `PFPooledPrimitives.lua` captures each class's six vanilla fluid
 methods into a local,
@@ -177,8 +180,8 @@ Keep these three aligned with the installed build. When the game updates, follow
   every patched primitive in `PFPooledPrimitives.lua` guards on `isMultiSource()` →
   `getUsesExternalWaterSource()`, the server-authoritative synced flag (per `IsoObject.java`:
   persisted to save bits + network-synced). `hasExternalWaterSource()` is a client-only
-  transient that reads false on the server. `isPlumbed()` (which also folds in the
-  `canBeWaterPiped` modData hack) feeds that guard and the shared `utils.lua` scan. (B42.19
+  transient that reads false on the server. `isPlumbed()` (a straight read of that flag)
+  feeds that guard and the shared `utils.lua` scan. (B42.19
   moved the fixture menu to native Java, which removed the client-side menu predicate we
   previously had to reconcile against the action-side one.) Still verify authority per side
   (§Golden rule) before any future predicate change.
@@ -199,5 +202,12 @@ Keep these three aligned with the installed build. When the game updates, follow
 - **B41 stub ships 42 media:** `scripts/package.*` promote `42/media` into the mod root that
   the B41 `mod.info` points at, so a real B41 client would load B42 Lua (likely broken).
   Treated as an open decision (keep the stub vs drop B41), not changed yet.
-- **`getModData().canBeWaterPiped == false`** is how the debug scenario marks a sink plumbed
-  (`DebugPlumbing.lua`); real in-game plumbing sets `usesExternalWaterSource`. Test both.
+- **`modData.canBeWaterPiped` is Plumb-eligibility, not plumbed-ness.** Vanilla sets it
+  `true` when a player places a moved `waterPiped` fixture ("needs re-plumbing"; gates the
+  native Plumb menu option), and `false` only in `ISPlumbItem:complete` / the server
+  `plumbObject` command — in both cases on the same lines as `setUsesExternalWaterSource(true)`,
+  so `false` never occurs without the authoritative flag. Absent means "never moved", which
+  in a room pre-water-shutoff is an infinite *city-water* source (`IsoObject.isWaterInfinite`).
+  `isPlumbed()` therefore ignores it and reads `getUsesExternalWaterSource()` alone (the OR
+  on `canBeWaterPiped == false` was dropped as redundant + a false-positive trap);
+  `DebugRig.lua` sets both flags to mirror vanilla plumbing exactly.

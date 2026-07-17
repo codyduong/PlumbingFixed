@@ -84,8 +84,12 @@ name at call time**, which construct the vanilla timed actions — pooled via th
 above. But the Java menu gates and labels from the
 fixture's single found barrel (Java-side reads), so **`client/ISUI/PFPooledMenuFixups.lua`**
 post-processes the built menu in place: pooled Drink/Wash water figures and the Wash
-availability grey-out. Debug tooling: `client/DebugUIs/PFPlumbedConnectedMenu.lua`
-(per-barrel inspector) and `client/DebugUIs/Scenarios/DebugPlumbing.lua` (test world).
+availability grey-out. `client/ISUI/PFConnectedMatrixPanel.lua` docks a 3×3
+connected-barrels grid beside that menu (capacity-scaled fluid bars; hover shows per-fluid
+amounts and highlights the barrel's world sprite; in debug/admin, clicking a cell opens the
+mod's per-barrel fluid editor `client/DebugUIs/PFBarrelFluidWindow.lua` for that barrel —
+fluid picker + amount + Add/Empty, with MP edits sent through the capability-gated server
+commands). Debug tooling: `client/DebugUIs/Scenarios/DebugPlumbing.lua` (test world).
 The bootstraps `client/PlumbingFixedClient.lua` / `server/PlumbingFixedServer.lua` just
 `require` the shared primitives patch on each side.
 

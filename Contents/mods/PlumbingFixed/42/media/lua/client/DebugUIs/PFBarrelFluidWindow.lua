@@ -172,6 +172,9 @@ function PFBarrelFluidWindow:prerender()
     local source = findPlumbedSourceAt(row.coords.x, row.coords.y, row.coords.z)
     row.fluidBar:setContainer(source and source:getFluidContainer() or nil)
     row.infoButton:setTooltip(barrelDebugText(row.coords))
+    if source then
+      source:setHighlighted(self.playerNum, true, false)
+    end
   end
 end
 
@@ -221,5 +224,11 @@ function PFBarrelFluidWindow:close()
   self:removeFromUIManager()
   if PFBarrelFluidWindow.instance == self then
     PFBarrelFluidWindow.instance = nil
+  end
+  for _, row in ipairs(self.rows) do
+    local source = findPlumbedSourceAt(row.coords.x, row.coords.y, row.coords.z)
+    if source then
+      source:setHighlighted(self.playerNum, false)
+    end
   end
 end
