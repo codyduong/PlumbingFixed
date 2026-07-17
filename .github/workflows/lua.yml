@@ -32,15 +32,13 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
-          save-always: true
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-emmylua-0.24.0
           restore-keys: |
             ${{ runner.os }}-cargo-
 
       - name: Install EmmyLua Check
         if: steps.cache-cargo.outputs.cache-hit != 'true'
-        run: cargo install emmylua_check
+        run: cargo install emmylua_check --version 0.24.0
 
       - name: Install EmmyLua Formatter
         if: steps.cache-cargo.outputs.cache-hit != 'true'
