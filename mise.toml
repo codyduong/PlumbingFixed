@@ -33,8 +33,9 @@ description = "Lint + type-check Lua (luafmt + emmylua_check); mirrors CI"
 run = "& scripts/check.ps1"
 
 [tasks.decompile]
-description = "Decompile the installed game into .decompiled/ for client/server analysis"
-run = "& scripts/decompile.ps1"
+description = "Decompile the installed game into .decompiled/<version>/ for client/server analysis"
+usage = 'arg "<version>" help="PZ build being decompiled, e.g. 42.20 (see docs/UPDATING-PZ.md #0)"'
+run = '& scripts/decompile.ps1 -Version $env:usage_version'
 
 [tasks.bump]
 description = "Set the mod's semver in every mod.info (not the targeted PZ build)"

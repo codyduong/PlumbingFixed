@@ -5,13 +5,15 @@
 	"contentfolder" "{{CONTENTFOLDER}}"
 	"previewfile" "{{PREVIEWFILE}}"
 	"changenote" "{{CHANGENOTE}}"
-	"title" "PlumbingFixed [B42.19+]"
-	"description" "[h1]PlumbingFixed (B42.19 Support)[/h1]
+	"title" "PlumbingFixed [B42.20]"
+	"description" "[h1]PlumbingFixed[/h1]
 [b]Improves vanilla plumbing behavior with smarter fluid draw[/b]. Instead of a plumbed sink drawing water from exactly one water barrel until it is depleted, it will draw from all of the barrels. When you are using water from multiple water barrels the tooltips will now report the overall amount in all barrels instead of just in one barrel.
 
 This means you can now [b]perform common actions[/b] without interruption and without having to micromanage your water barrels. Perfect addition for any mid to late-game players who struggle with water management with their water barrels.
 
 [b][u]Works in Singleplayer & Multiplayer[/u] - Safe to enable/disable mid-save.[/b]
+
+[b][u]Works in B42.19/20[/u][/b]
 
 [b][u]THIS MOD HAS NO EFFECT ON UNPLUMBED FIXTURES.[/u][/b]
 
@@ -35,11 +37,27 @@ A table of known mods as well as what versions they are compatible with. The pur
 		[th]Status[/th]
 	[/tr]
 	[tr]
+		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3403870858]Lifestyle: Hobbies[/url][/td]
+		[td]0.4.0[/td]
+		[td]
+			Compatible - [u]supported[/u]
+			This mod's hygiene fixtures (shower, bath, toilet, sink) are compatible with PlumbingFixed.
+		[/td]
+	[/tr]
+	[tr]
 		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3460812542]Washing Menus Improved [B42][/url][/td]
 		[td]4.7.13[/td]
 		[td]
-			Compatible - [u]will be supported[/u]
-			This mod will use the PlumbingFixed behavior when cleaning clothes/washing bandages.
+			Compatible - [u]supported[/u]
+			This mod's new menus are compatible with PlumbingFixed.
+		[/td]
+	[/tr]
+	[tr]
+		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3764655475]Plumbed Sink Mains Water Fix[/url][/td]
+		[td]1.0[/td]
+		[td]
+			Compatible - [u]supported[/u]
+			This mod fixes a vanilla bug so a plumbed fixture correctly uses mains water until shutoff. It toggles the fixture back to the container-above behavior once mains water is cut off, at which point it will use PlumbingFixed's behavior.
 		[/td]
 	[/tr]
 	[tr]
@@ -47,7 +65,7 @@ A table of known mods as well as what versions they are compatible with. The pur
 		[td]Any[/td]
 		[td]
 			Incompatible - [u]will not be supported[/u]
-			This mod is similar to what this mod does. It is not yet available in B42.19 and also has some other features beyond our mod.
+			This mod is similar to what this mod does. It is not yet available in B42.19/20 and also has some other features beyond our mod.
 		[/td]
 	[/tr]
 	[tr]
@@ -69,7 +87,7 @@ This mod will turn all fluids plumbed into a fixture into regular water. It is n
 
 [u][b]No promise on this ever being fixed.[/b][/u]
 
-[h3]Copyright (c) 2026 Cody Duong, and contributers[/h3]
+[h3]Copyright (c) 2026 Cody Duong, and contributors[/h3]
 
 Workshop ID: 3626008449
 Mod ID: PlumbingFixed"

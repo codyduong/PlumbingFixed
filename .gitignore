@@ -3,8 +3,9 @@
 # Ephemeral dedicated-server world/state (scripts/testhost.ps1; seed configs in testhost/)
 /.testhost/
 
-# Decompiled game source (analysis only, produced by scripts/decompile.ps1); suffixed
-# copies are previous-build snapshots kept during an update (docs/UPDATING-PZ.md)
+# Decompiled game source + vanilla Lua snapshots (analysis only, produced by
+# scripts/decompile.ps1); one subfolder per PZ build, e.g. .decompiled/42.19/,
+# .decompiled/42.20/, kept side by side during an update (docs/UPDATING-PZ.md)
 /.decompiled*/
 # Downloaded dev tools (e.g. Zomboid Decompiler)
 /.tools/

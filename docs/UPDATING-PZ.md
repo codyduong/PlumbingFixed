@@ -13,9 +13,7 @@ the vanilla Lua callers) between builds**, not merging function bodies.
 > baseline (`vendor/pz/` + `mise run vanilla-extract`/`vanilla-diff`) as the ancestor for
 > 3-way merges on update. The v2.1.0 switch to patching the fluid primitives removed every
 > forked vanilla function, so the baseline and its tooling were retired — they live in git
-> history if the mod ever forks vanilla Lua again. Steam offers no per-version depots
-> (only `public`/`unstable`/`outdatedunstable` branches), so the local snapshots below are
-> the only reliable old-build reference.
+> history if the mod ever forks vanilla Lua again.
 
 ## 0. Confirm the installed build
 
@@ -25,21 +23,23 @@ the vanilla Lua callers) between builds**, not merging function bodies.
   `appmanifest_108600.acf` (`buildid`, `LastUpdated`, `BetaKey`). Launch once to refresh
   `version.txt` if you want the exact `42.x.y` string.
 - The vanilla Lua we intercept is whatever is installed at `...\ProjectZomboid\media\lua`.
+- This is also the `<version>` string you pass to `mise run decompile` below (e.g. `42.20`)
+  — it names the output folder, so use the same string consistently for a given build.
 
 ## 1. Snapshot the old build BEFORE Steam updates it
 
-The update process needs the *previous* build to diff against, and Steam overwrites the
-install in place. While the old build is still installed:
+Each build's decompile lives in its own `.decompiled/<version>/` folder (gitignored), so
+running `mise run decompile` for the new build never touches an older one. But you still
+need to have *run it* for the currently-installed build before Steam overwrites it in
+place:
 
 ```
-Rename-Item .decompiled .decompiled-<old-build>          # e.g. .decompiled-42.19
-Copy-Item F:\steamlibrary\steamapps\common\ProjectZomboid\media\lua `
-          .decompiled-<old-build>\media-lua -Recurse     # the Lua callers, same snapshot
+mise run decompile 42.19        # or whatever §0 says is currently installed
 ```
 
-Both stay local (`.decompiled*/` is gitignored). If Steam already updated and you have no
-old decompile, the previous build is only recoverable via SteamDB manifest IDs +
-DepotDownloader with a logged-in owning account — avoid needing that.
+If Steam already updated and you have no old decompile, the previous build is only
+recoverable via SteamDB manifest IDs + DepotDownloader with a logged-in owning account —
+avoid needing that.
 
 ## 2. Align the type stubs (Umbrella submodule)
 
@@ -54,16 +54,19 @@ mismatch produces false type errors.
 ## 3. Re-decompile the new build
 
 ```
-mise run decompile        # -> .decompiled/ (bump -DecompilerVersion if needed)
+mise run decompile 42.20        # -> .decompiled/42.20/{source,media/lua} (bump -DecompilerVersion if needed)
 ```
-This is the authoritative source for **behavior** (client vs server vs synced) — signatures
-from Umbrella are not enough. This is also where you confirm whether a menu/handler still
-lives in Lua or has moved into Java for this build.
+This also copies the installed `media/lua` into `.decompiled/42.20/media/lua` in the same
+step, so the Java and its Lua callers for this build are snapshotted together. This is the
+authoritative source for **behavior** (client vs server vs synced) — signatures from
+Umbrella are not enough. This is also where you confirm whether a menu/handler still lives
+in Lua or has moved into Java for this build.
 
 ## 4. Diff the override surface
 
 ```
-git diff --no-index .decompiled-<old-build>/source .decompiled/source -- <file>
+git diff --no-index .decompiled/42.19/source .decompiled/42.20/source -- <file>
+git diff --no-index .decompiled/42.19/media/lua .decompiled/42.20/media/lua -- <file>
 ```
 
 Files that matter, mapped to what they can break:
@@ -77,10 +80,9 @@ Files that matter, mapped to what they can break:
   handler identity) and `PFConnectedMatrixPanel.lua` docks against.
 - `zombie/iso/objects/IsoClothingWasher.java` (and dryer) — the Java-side water draws that
   `PFWasherPooling.lua` redistributes via `OnWaterAmountChange`.
-- `media/lua` timed actions (diff the snapshot against the new install) — we don't fork
-  them, but they are the Lua dispatch through which our patched primitives are reached:
-  confirm they still call the fixture's methods (`obj:useFluid(...)` etc.) rather than a
-  new Java path.
+- `media/lua` timed actions (the `media/lua` diff above) — we don't fork them, but they are
+  the Lua dispatch through which our patched primitives are reached: confirm they still
+  call the fixture's methods (`obj:useFluid(...)` etc.) rather than a new Java path.
 
 Three outcomes per spot:
 
@@ -105,5 +107,4 @@ semver):
 
 - `mise run check`, then a full SP + MP pass per [TESTING.md](TESTING.md), including the
   unplumbed regression case.
-- Delete `.decompiled-<old-build>/` once the update is reconciled and released.
 - Then follow [RELEASING.md](RELEASING.md) (bump semver → tag → GitHub release → publish).

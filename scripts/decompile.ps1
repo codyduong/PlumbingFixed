@@ -1,15 +1,24 @@
 #!/usr/bin/env pwsh
-# Decompile the installed Project Zomboid into ./.decompiled for client/server analysis.
+# Decompile the installed Project Zomboid into ./.decompiled/<version>/ for client/server
+# analysis, alongside a same-build snapshot of the vanilla Lua callers.
 # Uses Zomboid Decompiler (demiurgeQuantified, Vineflower-based, supports 42.13+).
-# Preferred: `mise run decompile`   Direct: `pwsh -NoProfile -File scripts/decompile.ps1`
+# Preferred: `mise run decompile 42.20`   Direct: `pwsh -NoProfile -File scripts/decompile.ps1 -Version 42.20`
 #
 # Why: the Umbrella stubs tell you a Java method's SIGNATURE, but not whether it is
 # client-authoritative, server-authoritative, or synced. Reading the decompiled source is
 # how we verify what an API ACTUALLY does before overriding it. See CLAUDE.md ("golden rule").
+#
+# Each build's output lands in its own folder (.decompiled/<version>/source,
+# .decompiled/<version>/media/lua) so the old and new builds sit side by side for diffing —
+# see docs/UPDATING-PZ.md.
 
 param(
   # Project Zomboid install dir. Override with -GamePath or $env:PZ_HOME.
   [string]$GamePath = $env:PZ_HOME,
+  # PZ build string identifying the output folder, e.g. "42.20". Required — auto-detection
+  # from version.txt is unreliable (only rewrites on launch; see docs/UPDATING-PZ.md §0).
+  [Parameter(Mandatory = $true)]
+  [string]$Version,
   # Pinned decompiler release. Bump when the game updates if a newer one is needed.
   [string]$DecompilerVersion = "v0.3.1",
   [string]$OutDir  = ".decompiled",
@@ -83,16 +92,27 @@ if ($code -ne 0) {
   exit $code
 }
 
-# --- Relocate output into .decompiled/ --------------------------------------------------
+# --- Relocate output into .decompiled/<version>/source ---------------------------------
 $produced = Get-ChildItem $toolRoot -Recurse -Directory -Filter "output" -ErrorAction SilentlyContinue |
   Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$repoOut = Join-Path (Get-Location) $OutDir
+$versionOut = Join-Path (Get-Location) (Join-Path $OutDir $Version)
+$sourceOut  = Join-Path $versionOut "source"
 if ($produced) {
-  if (Test-Path $repoOut) { Remove-Item -Recurse -Force $repoOut }
-  New-Item -ItemType Directory -Force -Path $repoOut | Out-Null
-  Copy-Item (Join-Path $produced.FullName "*") $repoOut -Recurse -Force
-  Write-Host "Decompiled source -> $OutDir/" -ForegroundColor Green
+  if (Test-Path $sourceOut) { Remove-Item -Recurse -Force $sourceOut }
+  New-Item -ItemType Directory -Force -Path $sourceOut | Out-Null
+  Copy-Item (Join-Path $produced.FullName "*") $sourceOut -Recurse -Force
+  Write-Host "Decompiled source -> $OutDir/$Version/source/" -ForegroundColor Green
 } else {
   Write-Host "Decompiler finished, but no 'output' folder was found under $toolRoot." -ForegroundColor Yellow
-  Write-Host "Look inside $toolRoot for the results and copy them into $OutDir/ manually." -ForegroundColor Yellow
+  Write-Host "Look inside $toolRoot for the results and copy them into $sourceOut manually." -ForegroundColor Yellow
 }
+
+# --- Snapshot vanilla game resources from the SAME install, alongside the Java -----------
+# Mirrors the game's own media/ layout under the version folder (media/lua for now; other
+# media/ subfolders can be added the same way later) so two builds sit side by side for a
+# straight `git diff --no-index`.
+$mediaOut = Join-Path $versionOut "media"
+if (Test-Path $mediaOut) { Remove-Item -Recurse -Force $mediaOut }
+New-Item -ItemType Directory -Force -Path $mediaOut | Out-Null
+Copy-Item (Join-Path $GamePath "media\lua") $mediaOut -Recurse -Force
+Write-Host "Vanilla Lua snapshot -> $OutDir/$Version/media/lua/" -ForegroundColor Green

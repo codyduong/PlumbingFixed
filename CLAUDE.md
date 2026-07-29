@@ -58,7 +58,7 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | Task | What it does |
 |------|--------------|
 | `mise run check` | luafmt + emmylua_check (mirrors CI `.github/workflows/lua.yml`) |
-| `mise run decompile` | Decompile the installed game into `.decompiled/` for analysis |
+| `mise run decompile 42.20` | Decompile the installed game into `.decompiled/42.20/` for analysis |
 | `mise run bump 1.3.14` | Set `modversion` in both `mod.info` files |
 | `mise run package v1.3.14` | Validate versions + assemble `dist/PlumbingFixed` |
 | `mise run deploy <client\|server\|all>` | Package + sync (client=Workshop dev dir, server=`.testhost` mods dir) |
@@ -133,7 +133,9 @@ Java-internal callers bypass it — hence `PFPooledMenuFixups` (native menu) and
 
 - **Vanilla Lua** (what we override): `F:\steamlibrary\steamapps\common\ProjectZomboid\media\lua\{client,server,shared}` — this is the *installed* build (currently 42.x unstable).
 - **Java type stubs** (EmmyLua): `Umbrella/` submodule, pinned to the matching game tag (now `42.19.0`). Signatures only — not behavior.
-- **Decompiled Java** (behavior/authority): `.decompiled/` via `mise run decompile` (gitignored).
+- **Decompiled Java** (behavior/authority): `.decompiled/<version>/source` via `mise run
+  decompile <version>` (gitignored); `.decompiled/<version>/media/lua` is the matching
+  vanilla Lua snapshot, one folder per PZ build so two builds can be diffed side by side.
 
 Keep these three aligned with the installed build. When the game updates, follow
 [docs/UPDATING-PZ.md](docs/UPDATING-PZ.md).
