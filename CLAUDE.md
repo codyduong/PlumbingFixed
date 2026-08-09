@@ -47,10 +47,16 @@ Never "fix" a symptom by swapping predicates until green. Find the authoritative
 
 ## Toolchain (mise)
 
-All tooling is pinned in [`mise.toml`](mise.toml). One-time: install
+All tooling is pinned in [`mise.toml`](mise.toml). The actual scripts live in
+[`tooling/`](tooling/) — a **git submodule** sourced from
+[Project-Zomboid-Template](https://github.com/codyduong/Project-Zomboid-Template), pinned to
+a tag (currently `v0.1.1`), not tracking `main`. `mise.toml` here is a thin per-repo shim
+over it — a mod-agnostic script library shared across mod repos, factored out so toolchain
+fixes reach every mod that syncs. One-time: install
 [mise](https://mise.jdx.dev) (`winget install jdx.mise`), then:
 
 ```
+git submodule update --init
 mise install          # provisions emmylua_formatter 0.24.0 (luafmt), emmylua_check 0.18.0, Temurin JDK 17 (decompiler)
 mise tasks            # list workflows;  `mise run <task> --help` shows a task's arguments
 ```
@@ -64,12 +70,24 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | `mise run deploy <client\|server\|all>` | Package + sync (client=Workshop dev dir, server=`.testhost` mods dir) |
 | `mise run testhost [--reset]` | Ephemeral local dedicated server for MP testing (state in `.testhost/`) |
 | `mise run publish <test\|prod> "note"` | Upload to Steam Workshop via steamcmd (required test/prod target; run it yourself; Steam Guard) |
+| `mise run sync-template` | Pull the latest `tooling/` (Project-Zomboid-Template) commit; review + commit the bump |
 
-Each task shells out to a PowerShell `scripts/<name>.ps1`, which you can also run directly
-(`pwsh -File scripts/<name>.ps1`). The one exception is `scripts/package.sh` — a CI-only
-twin of `package.ps1` for the Linux release job; keep the two identical when touching packaging.
-Task arguments are declared with mise's `usage` spec, so `mise run bump --help` documents them.
+Each task shells out to a PowerShell `tooling/scripts/<name>.ps1`, which you can also run
+directly (`pwsh -File tooling/scripts/<name>.ps1`). The one exception is
+`tooling/scripts/package.sh` — a CI-only twin of `package.ps1` for the Linux release job;
+both live in the shared submodule, so fixes to one reach the other automatically. Task
+arguments are declared with mise's `usage` spec, so `mise run bump --help` documents them.
 `emmylua_check`/`luafmt` must be on PATH (that's what `mise install` guarantees).
+
+**Keeping `tooling/` in sync / diverging**: `mise run sync-template` updates the submodule
+and stages the bump for review. To pin/skip, just don't run it. To fully vendor and drop the
+submodule link: `git submodule deinit tooling && git rm tooling`, then copy the scripts in
+directly — see the template's
+[docs/USING-THIS-TEMPLATE.md](https://github.com/codyduong/Project-Zomboid-Template/blob/main/docs/USING-THIS-TEMPLATE.md).
+Do **not** edit `tooling/` in place here — changes belong in the template repo. `.emmyrc.json`,
+`.luafmt.toml`, `.vscode/`, `.claude/settings.json`, `mise.toml`, and the doc files are
+**not** submoduled (position/name-sensitive or meant to diverge per mod) — they were
+one-time-scaffolded from the template and are owned by this repo from here on.
 
 **Secrets / local overrides:** `cp mise.local.toml.example mise.local.toml` and set
 `STEAM_USERNAME` + `STEAM_PASSWORD` (and optional `PZ_HOME`, `ZOMBOID_DIR`, item ids).
@@ -88,7 +106,7 @@ Mod content lives under `Contents/mods/PlumbingFixed/` with PZ's multi-build lay
 - `common/` — empty placeholder (`.gitkeep`).
 
 Steam Workshop page metadata is **source-controlled** as `workshop/workshop.vdf` — a steamcmd
-KeyValues file stored **verbatim** (title/description/tags/appid). `scripts/publish-workshop.*`
+KeyValues file stored **verbatim** (title/description/tags/appid). `tooling/scripts/publish-workshop.*`
 only substitute the dynamic fields (`{{PUBLISHEDFILEID}}` and `{{VISIBILITY}}` per target —
 prod public, test unlisted — `{{CONTENTFOLDER}}`/`{{PREVIEWFILE}}` built paths,
 `{{CHANGENOTE}}`) — no bbcode/conf conversion. **steamcmd is the only publish path.**
@@ -203,7 +221,7 @@ Keep these three aligned with the installed build. When the game updates, follow
   state (indiscriminate mixing + per-barrel opt-out) is tracked in
   [docs/FLUID-MIXING.md](docs/FLUID-MIXING.md) — keep the `FUTURE(fluid-mixing)` stubs
   aligned with it.
-- **B41 stub ships 42 media:** `scripts/package.*` promote `42/media` into the mod root that
+- **B41 stub ships 42 media:** `tooling/scripts/package.*` promote `42/media` into the mod root that
   the B41 `mod.info` points at, so a real B41 client would load B42 Lua (likely broken).
   Treated as an open decision (keep the stub vs drop B41), not changed yet.
 - **`modData.canBeWaterPiped` is Plumb-eligibility, not plumbed-ness.** Vanilla sets it

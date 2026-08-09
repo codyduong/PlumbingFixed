@@ -8,40 +8,10 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write # Required to push tags and create releases
-
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Package Mod
-        run: |
-          chmod +x scripts/package.sh
-          ./scripts/package.sh ${{ inputs.tag_name }}
-
-      - name: Zip Artifact
-        run: |
-          # Zip the folder staged by package.sh; the archive root stays "PlumbingFixed"
-          # (the name the mods folder needs), only the staging parent is dist/.
-          cd dist && zip -r ../PlumbingFixed.zip PlumbingFixed
-
-      - name: Create and Push Tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git tag ${{ inputs.tag_name }}
-          git push origin ${{ inputs.tag_name }}
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ inputs.tag_name }}
-          files: PlumbingFixed.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  call:
+    uses: codyduong/Project-Zomboid-Template/.github/workflows/release.yml@v0.1.1
+    with:
+      tag_name: ${{ inputs.tag_name }}
+      mod_name: PlumbingFixed
+    secrets: inherit

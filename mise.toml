@@ -5,9 +5,12 @@
 # `mise tasks`        lists every workflow.
 # `mise run <task>`   runs one.  `mise run <task> --help`  shows its arguments.
 #
-# Each task shells out to a PowerShell script in ./scripts (also runnable directly via
-# `pwsh -File scripts/<name>.ps1`). Development happens on Windows; the sole exception is
-# scripts/package.sh, kept for the Linux CI release job (.github/workflows/release.yml).
+# Each task shells out to a PowerShell script in ./tooling/scripts — a git submodule sourced
+# from https://github.com/codyduong/Project-Zomboid-Template, pinned to a tag (see
+# `git -C tooling status`), not tracking main (also runnable directly via
+# `pwsh -File tooling/scripts/<name>.ps1`). Development happens on Windows; the sole
+# exception is tooling/scripts/package.sh, kept for the Linux CI release job
+# (.github/workflows/release.yml).
 #
 # Secrets for publishing (STEAM_USER, etc.) go in mise.local.toml — copy it from
 # mise.local.toml.example. That file is git-ignored and auto-loaded with higher precedence.
@@ -30,22 +33,22 @@ STEAM_PASSWORD = { required = "Set STEAM_PASSWORD to your Steam password in mise
 
 [tasks.check]
 description = "Lint + type-check Lua (luafmt + emmylua_check); mirrors CI"
-run = "& scripts/check.ps1"
+run = "& tooling/scripts/check.ps1"
 
 [tasks.decompile]
 description = "Decompile the installed game into .decompiled/<version>/ for client/server analysis"
 usage = 'arg "<version>" help="PZ build being decompiled, e.g. 42.20.2 (Major.Minor.Patch; see docs/UPDATING-PZ.md #0)"'
-run = '& scripts/decompile.ps1 -Version $env:usage_version'
+run = '& tooling/scripts/decompile.ps1 -Version $env:usage_version'
 
 [tasks.bump]
 description = "Set the mod's semver in every mod.info (not the targeted PZ build)"
 usage = 'arg "<version>" help="Mod semver to set, e.g. 1.3.14 (leading v optional)"'
-run = '& scripts/bump-version.ps1 $env:usage_version'
+run = '& tooling/scripts/bump-version.ps1 $env:usage_version'
 
 [tasks.package]
 description = "Validate mod.info versions against the tag, then build dist/PlumbingFixed"
 usage = 'arg "<tag>" help="Release tag to validate against, e.g. v1.3.14"'
-run = '& scripts/package.ps1 $env:usage_tag'
+run = '& tooling/scripts/package.ps1 $env:usage_tag'
 
 [tasks.deploy]
 description = "Package + sync for in-game testing (client=Workshop dev dir, server=testhost mods dir)"
@@ -54,7 +57,7 @@ arg "<target>" help="Where to deploy: client, server, or all" {
   choices "client" "server" "all"
 }
 '''
-run = '& scripts/deploy-local.ps1 $env:usage_target'
+run = '& tooling/scripts/deploy-local.ps1 $env:usage_target'
 
 [tasks.steam-login]
 description = "Log in to steamcmd to cache the Steam session (password + Steam Guard prompt)"
@@ -73,10 +76,19 @@ arg "<target>" help="Which item to publish: test or prod (required — no implic
 arg "[changenote]" help="Workshop changenote for this update" default=""
 flag "-f --file <file>" help="Read the changenote from a bbcode file (instead of [changenote])"
 '''
-run = '& scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote -ChangeNoteFile $env:usage_file'
+run = '& tooling/scripts/publish-workshop.ps1 $env:usage_target $env:usage_changenote -ChangeNoteFile $env:usage_file'
 
 [tasks.testhost]
 description = "Run an ephemeral local dedicated server for MP testing (state in .testhost/)"
 raw = true
 usage = 'flag "--reset" help="Delete the .testhost world and reprovision from testhost/ seeds"'
-run = '& scripts/testhost.ps1 -Reset:($env:usage_reset -eq "true")'
+run = '& tooling/scripts/testhost.ps1 -Reset:($env:usage_reset -eq "true")'
+
+[tasks.sync-template]
+description = "Pull the latest tooling/ (Project-Zomboid-Template) submodule commit"
+raw = true
+run = '''
+git submodule update --remote tooling
+git add tooling
+Write-Host "tooling/ updated. Review 'git diff --staged tooling', then commit." -ForegroundColor Cyan
+'''

@@ -15,39 +15,5 @@ on:
       - master
 
 jobs:
-  emmylua:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Cache Cargo
-        id: cache-cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-emmylua-0.24.0
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Install EmmyLua Check
-        if: steps.cache-cargo.outputs.cache-hit != 'true'
-        run: cargo install emmylua_check --version 0.24.0
-
-      - name: Install EmmyLua Formatter
-        if: steps.cache-cargo.outputs.cache-hit != 'true'
-        run: cargo install emmylua_formatter --version 0.24.0
-
-      - name: Validate Lua Files
-        working-directory: .
-        run: emmylua_check . -c .emmyrc.json
-
-      - name: Check Formatting
-        working-directory: .
-        run: luafmt . --check
+  call:
+    uses: codyduong/Project-Zomboid-Template/.github/workflows/lint.yml@v0.1.1

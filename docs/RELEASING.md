@@ -3,7 +3,7 @@
 Two independent version concepts — don't conflate them:
 
 - **Mod semver** (`modversion=1.3.x` in both `mod.info` files) — bumped every release, must
-  equal the git tag `vX.Y.Z`. `scripts/package.*` enforce tag == modversion.
+  equal the git tag `vX.Y.Z`. `tooling/scripts/package.*` enforce tag == modversion.
 - **Targeted PZ build** (`name=PlumbingFixed (B42.15)` in `42/mod.info`, and the
   `title=... [B42.x+]` / "TESTED IN B42.x" lines in `workshop/workshop.vdf`) — changed only
   when you retarget a new game build. That's
@@ -23,12 +23,13 @@ Two independent version concepts — don't conflate them:
 5. **Package sanity** (optional, CI also does this): `mise run package v1.3.14` builds
    `dist/PlumbingFixed` and fails on any version mismatch.
    > `package` is the shared build step — CI (`release.yml`), `deploy`, and `publish` all go
-   > through it. It has **twin** implementations, `scripts/package.ps1` (local dev) and
-   > `scripts/package.sh` (CI-only, the repo's sole .sh script); if you change one, change
-   > the other identically.
+   > through it. It has **twin** implementations, `tooling/scripts/package.ps1` (local dev)
+   > and `tooling/scripts/package.sh` (CI-only); both live in the shared `tooling/`
+   > submodule, so fixes to one reach the other automatically.
 6. **Tag + GitHub release**: run the **Release Mod** GitHub Action
-   (`.github/workflows/release.yml`, `workflow_dispatch`) with tag `v1.3.14`. It runs
-   `scripts/package.sh`, zips `dist/PlumbingFixed`, pushes the tag, and creates the GitHub release.
+   (`.github/workflows/release.yml`, `workflow_dispatch`) with tag `v1.3.14`. It's a thin
+   caller into the template's reusable release workflow, which runs `package.sh`, zips
+   `dist/PlumbingFixed`, pushes the tag, and creates the GitHub release.
 7. **Publish to Steam Workshop** (local, interactive). The target is **required** — publish
    to the **test** item, verify its page, *then* **prod**:
    ```
@@ -36,15 +37,16 @@ Two independent version concepts — don't conflate them:
    mise run publish prod "Short changenote"   # only once test looks right
    ```
 
-## Steam Workshop publish (`scripts/publish-workshop.ps1`)
+## Steam Workshop publish (`tooling/scripts/publish-workshop.ps1`)
 
 - **One-time:** `cp mise.local.toml.example mise.local.toml` and set `STEAM_USERNAME` +
   `STEAM_PASSWORD` (git-ignored; the password is age-encrypted — see
   [LESSONS-LEARNED.md](LESSONS-LEARNED.md)). `mise run publish` logs in non-interactively.
 - **Target is required and explicit.** `mise run publish <test|prod> "note"` — there is **no
-  default and no env fallback**, so you can't publish to prod by accident. The two item ids are
-  baked into the publish scripts (`test` = `3680940911`, `prod` = `3626008449`). Always do
-  **test** and eyeball the page before **prod**.
+  default and no env fallback**, so you can't publish to prod by accident. The two item ids
+  live in `workshop/item-ids.json` (`test` = `3680940911`, `prod` = `3626008449`) — public,
+  not secret, so it's committed rather than baked into the (now shared, submoduled) publish
+  script. Always do **test** and eyeball the page before **prod**.
 - Requires **steamcmd** on PATH: `winget install Valve.SteamCMD` (winget id `Valve.SteamCMD`).
 - It rebuilds `dist/PlumbingFixed`, fills `workshop/workshop.vdf` into `.publish/workshop.vdf`,
   then runs `steamcmd +login <user> +workshop_build_item <vdf> +quit`.
@@ -56,7 +58,7 @@ Two independent version concepts — don't conflate them:
   To change the Steam page, edit `workshop/workshop.vdf` and re-publish — don't edit the page
   in-browser (a publish overwrites it).
 - **Preview it first.** `mise run publish` always uploads, so to preview run the script directly:
-  `pwsh -File scripts/publish-workshop.ps1 test "note" -DryRun` builds + prints the VDF
+  `pwsh -File tooling/scripts/publish-workshop.ps1 test "note" -DryRun` builds + prints the VDF
   **without uploading** (works without steamcmd installed). With no target, dry-run defaults
   to `test`; pass `prod` to preview the prod VDF.
 - Set the Steam user via `-SteamUser you` or `$env:STEAM_USERNAME`; otherwise it prompts.

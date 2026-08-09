@@ -1,3 +1,6 @@
 [submodule "Umbrella"]
 	path = Umbrella
 	url = https://github.com/PZ-Umbrella/Umbrella.git
+[submodule "tooling"]
+	path = tooling
+	url = https://github.com/codyduong/Project-Zomboid-Template.git
