@@ -5,7 +5,7 @@
 	"contentfolder" "{{CONTENTFOLDER}}"
 	"previewfile" "{{PREVIEWFILE}}"
 	"changenote" "{{CHANGENOTE}}"
-	"title" "PlumbingFixed [B42.20]"
+	"title" "PlumbingFixed [B42.20.2]"
 	"description" "[h1]PlumbingFixed[/h1]
 [b]Improves vanilla plumbing behavior with smarter fluid draw[/b]. Instead of a plumbed sink drawing water from exactly one water barrel until it is depleted, it will draw from all of the barrels. When you are using water from multiple water barrels the tooltips will now report the overall amount in all barrels instead of just in one barrel.
 
@@ -58,6 +58,14 @@ A table of known mods as well as what versions they are compatible with. The pur
 		[td]
 			Compatible - [u]supported[/u]
 			This mod fixes a vanilla bug so a plumbed fixture correctly uses mains water until shutoff. It toggles the fixture back to the container-above behavior once mains water is cut off, at which point it will use PlumbingFixed's behavior.
+		[/td]
+	[/tr]
+	[tr]
+		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3592172476]Take A Bath And Shower [SP/MP][/url][/td]
+		[td]42.20.2[/td]
+		[td]
+			Compatible - [u]supported[/u]
+			This mod's plumbed faucets are compatible with PlumbingFixed.
 		[/td]
 	[/tr]
 	[tr]

@@ -58,7 +58,7 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | Task | What it does |
 |------|--------------|
 | `mise run check` | luafmt + emmylua_check (mirrors CI `.github/workflows/lua.yml`) |
-| `mise run decompile 42.20` | Decompile the installed game into `.decompiled/42.20/` for analysis |
+| `mise run decompile 42.20.2` | Decompile the installed game into `.decompiled/42.20.2/` for analysis |
 | `mise run bump 1.3.14` | Set `modversion` in both `mod.info` files |
 | `mise run package v1.3.14` | Validate versions + assemble `dist/PlumbingFixed` |
 | `mise run deploy <client\|server\|all>` | Package + sync (client=Workshop dev dir, server=`.testhost` mods dir) |
@@ -100,7 +100,7 @@ Lua roots under `42/media/lua/`:
 |------|------|----------------------|
 | `shared/PlumbingFixed/PFUtils.lua` | shared | core: `getPlumbedSources`, `getPlumbedWaterAmount` (water-category), `getPlumbedFluidAmount` / `hasPlumbedWater` (vanilla-parity reads), `getPlumbedWaterCapacity`, `getWaterAmount`, `removeWaterTopDown`, `findWaterObject`, `isPlumbed` |
 | `shared/PlumbingFixed/DebugRig.lua` | shared | `PFDebugRig`: buildable/clearable test rig (3×3 + 4 empty barrels + sink + stairs), reused by the scenario, the MP spawn command, and SP spawning |
-| `shared/PlumbingFixed/PFPooledPrimitives.lua` | shared | patches the six fixture fluid primitives (`getFluidAmount`, `hasFluid`, `hasWater`, `useFluid`, `moveFluidToTemporaryContainer`, `transferFluidTo`) via `__classmetatables` on `IsoObject` + `IsoThumpable`, guarded by `isMultiSource`; the vanilla timed actions run untouched and pool through these |
+| `shared/PlumbingFixed/PFPooledPrimitives.lua` | shared | patches the seven fixture fluid primitives (`getFluidAmount`, `hasFluid`, `hasWater`, `useFluid`, `moveFluidToTemporaryContainer`, `transferFluidTo`, `getFluidCapacity`) via `__classmetatables` on `IsoObject` + `IsoThumpable`, guarded by `isMultiSource`; the vanilla timed actions run untouched and pool through these |
 | `client/PlumbingFixedClient.lua` | client | `require`s the shared primitives patch on the client |
 | `client/ISUI/PFPooledMenuFixups.lua` | client | `OnFillWorldObjectContextMenu` post-processor: rewrites Drink/Wash tooltips + Wash grey-out to pooled totals; debug-mode "Modified by Plumbing Fixed" marker |
 | `client/PFModOptions.lua` | client | single `PZAPI.ModOptions` page: grid-axis tickbox + pool-bar position combo; debug options attach to it behind their own gate |
@@ -111,7 +111,7 @@ Lua roots under `42/media/lua/`:
 | `server/PlumbingFixed/PFWasherPooling.lua` | server | event-driven (`OnWaterAmountChange` + `EveryOneMinute`) pooling for running washers, whose draws happen Java-side and bypass the Lua primitives |
 | `server/PlumbingFixedServer.lua` | server | `require`s the shared primitives patch on the server; `OnClientCommand` handlers for rig spawn + barrel fluid edits (capability-gated; the fluid edits additionally admin-gated) |
 
-**Patch pattern**: `PFPooledPrimitives.lua` captures each class's six vanilla fluid
+**Patch pattern**: `PFPooledPrimitives.lua` captures each class's seven vanilla fluid
 methods into a local,
 then reassigns the entries of the class's method table in place
 (`__classmetatables[Class].__index`, which Kahlua dispatches userdata calls through). The
@@ -215,3 +215,31 @@ Keep these three aligned with the installed build. When the game updates, follow
   `isPlumbed()` therefore ignores it and reads `getUsesExternalWaterSource()` alone (the OR
   on `canBeWaterPiped == false` was dropped as redundant + a false-positive trap);
   `DebugRig.lua` sets both flags to mirror vanilla plumbing exactly.
+- **`require()` paths are relative to `media/lua/{shared,client,server}/` — never prefix
+  with `lua/`.** Vanilla's `require(f)` (`LuaManager.java`) resolves `f` by prepending each
+  registered search root (`media/lua/shared/`, `media/lua/client/`, ...) to the given path
+  and looking up that exact concatenated string; it never strips a redundant leading `lua/`.
+  `require("lua/client/ISUI/ISWorldObjectContextMenu")` (present in `PFConnectedMatrixPanel.lua`
+  / `PFPooledMenuFixups.lua` from 2026-07-10 until fixed) therefore could never resolve —
+  confirmed by grepping the entire vanilla Lua tree, which has zero `require("lua/...")`
+  calls; every vanilla and mod require here uses the bare form, e.g. `require("ISUI/ISPanel")`.
+  It logged a `require(...) failed` warning on every load but caused no functional breakage,
+  because `LoadDirBase` always finishes loading every vanilla ("game") file before any mod
+  file runs (`gameFiles` are prepended to `modFiles` in the combined load list) — so the
+  vanilla global the `require` was reaching for already existed by the time our code ran.
+  **Do not treat that as a safety net**: a missing/renamed vanilla file, a require target
+  that isn't part of the always-loaded vanilla set, or a future loader change would turn the
+  same mistake into a hard `attempt to index nil value` at the point of use instead of a
+  harmless warning at load time. A `require(...) failed` warning in the log is always a real
+  bug — chase it to a wrong path, not a false positive to silence.
+- **`getFluidCapacity()` is patched, but deliberately not exposed through `PFUtils.lua`'s own
+  non-multi-source fallbacks the way the original six are.** `PFPooledMenuFixups.lua`'s
+  tooltip fixups compute pooled capacity via `getPlumbedWaterCapacity()` directly and never
+  needed the primitive patched — it was added later, purely so third-party mods reading
+  capacity through the standard Lua method (e.g. Take A Bath And Shower's own Drink/Fill
+  tooltip calling `bathingObj:getFluidCapacity()` on a plumbed fixture) get a pooled figure
+  consistent with the pooled `getFluidAmount()` they also read, instead of vanilla's
+  single-barrel capacity paired against our pooled amount (which visibly showed amount >
+  capacity). `getPlumbedWaterCapacity()`'s own single-source fallback (`PFUtils.lua`) calls
+  `waterObject.__PFraw:getFluidCapacity()`, not `waterObject:getFluidCapacity()` — calling the
+  patched method directly from inside the util that backs it would recurse.

@@ -1,6 +1,6 @@
 require("ISUI/ISPanel")
 require("ISUI/ISButton")
-require("lua/client/ISUI/ISWorldObjectContextMenu")
+require("ISUI/ISWorldObjectContextMenu")
 require("DebugUIs/PFBarrelFluidWindow")
 require("PlumbingFixed/PFUtils")
 require("PFModOptions")

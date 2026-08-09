@@ -4,8 +4,9 @@
 /.testhost/
 
 # Decompiled game source + vanilla Lua snapshots (analysis only, produced by
-# scripts/decompile.ps1); one subfolder per PZ build, e.g. .decompiled/42.19/,
-# .decompiled/42.20/, kept side by side during an update (docs/UPDATING-PZ.md)
+# scripts/decompile.ps1); one subfolder per PZ build (Major.Minor.Patch, since patches can
+# change Java behavior too), e.g. .decompiled/42.19.0/, .decompiled/42.20.2/, kept side by
+# side during an update (docs/UPDATING-PZ.md)
 /.decompiled*/
 # Downloaded dev tools (e.g. Zomboid Decompiler)
 /.tools/

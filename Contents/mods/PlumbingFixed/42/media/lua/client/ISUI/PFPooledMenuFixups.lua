@@ -1,4 +1,4 @@
-require("lua/client/ISUI/ISWorldObjectContextMenu")
+require("ISUI/ISWorldObjectContextMenu")
 require("PlumbingFixed/PFUtils")
 
 -- B42.19 builds the fixture water menu in native Java (zombie/iso/ISWorldObjectContextMenuLogic).

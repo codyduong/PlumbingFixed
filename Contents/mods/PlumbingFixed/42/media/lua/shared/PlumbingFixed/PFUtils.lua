@@ -96,7 +96,7 @@ end
 function getPlumbedWaterCapacity(waterObject)
   local sources = getPlumbedSources(waterObject)
   if not isMultiSource(sources) then
-    return waterObject:getFluidCapacity()
+    return waterObject.__PFraw:getFluidCapacity()
   end
 
   local capacity = 0.0

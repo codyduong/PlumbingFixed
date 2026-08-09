@@ -7,6 +7,7 @@ require("PlumbingFixed/PFUtils")
 --- @field useFluid fun(self: PFRawBound, amount: number): number
 --- @field moveFluidToTemporaryContainer fun(self: PFRawBound, amount: number): FluidContainer
 --- @field transferFluidTo fun(self: PFRawBound, target: FluidContainer, amount: number): number
+--- @field getFluidCapacity fun(self: PFRawBound): number
 
 --- Kahlua dispatches userdata method calls through `__classmetatables[Class].__index`,
 --- a plain Lua table, and flattens inherited methods into each concrete class's own table
@@ -27,6 +28,7 @@ local function installPooledPrimitives(class)
       useFluid = index.useFluid,
       moveFluidToTemporaryContainer = index.moveFluidToTemporaryContainer,
       transferFluidTo = index.transferFluidTo,
+      getFluidCapacity = index.getFluidCapacity,
     }
     rawset(index, "__PFvanilla", vanilla)
   end
@@ -67,6 +69,10 @@ local function installPooledPrimitives(class)
 
   function index:transferFluidTo(target, amount)
     return transferPlumbedFluidTo(self, target, amount)
+  end
+
+  function index:getFluidCapacity()
+    return getPlumbedWaterCapacity(self)
   end
 end
 

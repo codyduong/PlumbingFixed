@@ -12,11 +12,11 @@ barrels**, so levels stay balanced.
 ## Patch strategy: pooled fluid primitives
 
 Every vanilla action (and third-party Lua such as WashingMenusImproved) reads and
-consumes fixture water through six `IsoObject` methods;
+consumes fixture water through seven `IsoObject` methods;
 `shared/PlumbingFixed/PFPooledPrimitives.lua` patches those methods at the dispatch
 layer, so the timed actions themselves run untouched and still pool. PZ's Kahlua
 runtime resolves `obj:method()` through a plain Lua
-table at `__classmetatables[Class].__index`. The patch captures the six vanilla functions
+table at `__classmetatables[Class].__index`. The patch captures the seven vanilla functions
 into a local, then reassigns the table entries in place — the standard
 capture-then-reassign override pattern (verified in-game: the entries are plain
 reassignable functions and dispatch honors them). The captures are stashed on the method
@@ -44,10 +44,10 @@ actions wholesale (`PFTakeWaterAction`, `PFWashClothing`, `PFWashYourself`,
 context-menu builder. We switched because that shape kept breaking: every PZ update meant
 re-diffing the copied bodies ([UPDATING-PZ.md](UPDATING-PZ.md)), B42.19 deleted the Lua
 menu builder outright (now native Java), and third-party actions never pooled. Patching
-the six primitives sits *below* every Lua caller, so nothing vanilla is re-pasted and
+the seven primitives sits *below* every Lua caller, so nothing vanilla is re-pasted and
 unknown callers pool for free.
 
-### The six primitives
+### The seven primitives
 
 | Primitive | Pooled behavior | Vanilla Lua callers served |
 |-----------|-----------------|----------------------------|
@@ -57,6 +57,7 @@ unknown callers pool for free.
 | `useFluid(amt)` | dispose `drawFromPool(self, min(amt, pooled))`; return used | `ISWashClothing`, `ISWashYourself`, `ISCleanBandage` completes |
 | `moveFluidToTemporaryContainer(amt)` | drain pool; return a clean-Water container | `ISTakeWaterAction` drink path |
 | `transferFluidTo(target, amt)` | drain pool; add clean Water to target; return used | `ISTakeWaterAction` item-fill path |
+| `getFluidCapacity()` | `getPlumbedWaterCapacity` (TOTAL capacity across sources) | not needed by our own tooltip fixups (which call `getPlumbedWaterCapacity` directly) — added so third-party Lua reading capacity the standard way (e.g. Take A Bath And Shower's Drink/Fill tooltip) sees a total consistent with the pooled `getFluidAmount()` it also reads, instead of a single barrel's capacity |
 
 `hasFluid`/`hasWater` need their own entries because their Java bodies call
 `getFluidAmount()` **in Java**, which never dispatches through the Lua table. The two

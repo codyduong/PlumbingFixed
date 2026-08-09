@@ -2,7 +2,7 @@
 # Decompile the installed Project Zomboid into ./.decompiled/<version>/ for client/server
 # analysis, alongside a same-build snapshot of the vanilla Lua callers.
 # Uses Zomboid Decompiler (demiurgeQuantified, Vineflower-based, supports 42.13+).
-# Preferred: `mise run decompile 42.20`   Direct: `pwsh -NoProfile -File scripts/decompile.ps1 -Version 42.20`
+# Preferred: `mise run decompile 42.20.2`   Direct: `pwsh -NoProfile -File scripts/decompile.ps1 -Version 42.20.2
 #
 # Why: the Umbrella stubs tell you a Java method's SIGNATURE, but not whether it is
 # client-authoritative, server-authoritative, or synced. Reading the decompiled source is
@@ -15,7 +15,8 @@
 param(
   # Project Zomboid install dir. Override with -GamePath or $env:PZ_HOME.
   [string]$GamePath = $env:PZ_HOME,
-  # PZ build string identifying the output folder, e.g. "42.20". Required — auto-detection
+  # PZ build string identifying the output folder, e.g. "42.20.2" (Major.Minor.Patch —
+  # patches can change Java behavior too, so don't truncate). Required — auto-detection
   # from version.txt is unreliable (only rewrites on launch; see docs/UPDATING-PZ.md §0).
   [Parameter(Mandatory = $true)]
   [string]$Version,
