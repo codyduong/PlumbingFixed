@@ -45,9 +45,7 @@ avoid needing that.
 ## 2. Align the type stubs (Umbrella submodule)
 
 ```
-git -C Umbrella fetch --tags
-git -C Umbrella checkout <matching-tag>   # e.g. 42.19.0
-git add Umbrella
+mise run sync-umbrella <matching-tag>   # e.g. 42.19.0
 ```
 Pick the Umbrella tag matching the installed build. `mise run check` uses these stubs, so a
 mismatch produces false type errors.

@@ -16,4 +16,4 @@ on:
 
 jobs:
   call:
-    uses: codyduong/Project-Zomboid-Template/.github/workflows/lint.yml@v0.1.1
+    uses: codyduong/Project-Zomboid-Template/.github/workflows/lint.yml@v0.2.0

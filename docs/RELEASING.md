@@ -37,7 +37,7 @@ Two independent version concepts — don't conflate them:
    mise run publish prod "Short changenote"   # only once test looks right
    ```
 
-## Steam Workshop publish (`tooling/scripts/publish-workshop.ps1`)
+## Steam Workshop publish (`tooling/scripts/publish-workshop.{ps1,sh}`)
 
 - **One-time:** `cp mise.local.toml.example mise.local.toml` and set `STEAM_USERNAME` +
   `STEAM_PASSWORD` (git-ignored; the password is age-encrypted — see
@@ -47,7 +47,8 @@ Two independent version concepts — don't conflate them:
   live in `workshop/item-ids.json` (`test` = `3680940911`, `prod` = `3626008449`) — public,
   not secret, so it's committed rather than baked into the (now shared, submoduled) publish
   script. Always do **test** and eyeball the page before **prod**.
-- Requires **steamcmd** on PATH: `winget install Valve.SteamCMD` (winget id `Valve.SteamCMD`).
+- Requires **steamcmd** on PATH: `winget install Valve.SteamCMD` (winget id `Valve.SteamCMD`)
+  on Windows; on Linux/macOS also requires **`jq`** (used to read `workshop/item-ids.json`).
 - It rebuilds `dist/PlumbingFixed`, fills `workshop/workshop.vdf` into `.publish/workshop.vdf`,
   then runs `steamcmd +login <user> +workshop_build_item <vdf> +quit`.
 - **`workshop/workshop.vdf` is the source of truth for the Workshop page** — a steamcmd
@@ -58,10 +59,12 @@ Two independent version concepts — don't conflate them:
   To change the Steam page, edit `workshop/workshop.vdf` and re-publish — don't edit the page
   in-browser (a publish overwrites it).
 - **Preview it first.** `mise run publish` always uploads, so to preview run the script directly:
-  `pwsh -File tooling/scripts/publish-workshop.ps1 test "note" -DryRun` builds + prints the VDF
+  `pwsh -File tooling/scripts/publish-workshop.ps1 test "note" -DryRun` (or
+  `bash tooling/scripts/publish-workshop.sh test "note" --dry-run`) builds + prints the VDF
   **without uploading** (works without steamcmd installed). With no target, dry-run defaults
   to `test`; pass `prod` to preview the prod VDF.
-- Set the Steam user via `-SteamUser you` or `$env:STEAM_USERNAME`; otherwise it prompts.
+- Set the Steam user via `-SteamUser`/`--steam-user` or
+  `$env:STEAM_USERNAME`/`$STEAM_USERNAME`; otherwise it prompts.
 - **Caveat:** only the single **preview** image is manageable via steamcmd. The extra
   gallery screenshots on the Workshop page are *not* settable this way — put images that
   should live in the description as `[img]<url>[/img]` BBCode (e.g. raw GitHub URLs) inside the

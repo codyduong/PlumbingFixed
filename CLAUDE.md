@@ -50,7 +50,7 @@ Never "fix" a symptom by swapping predicates until green. Find the authoritative
 All tooling is pinned in [`mise.toml`](mise.toml). The actual scripts live in
 [`tooling/`](tooling/) — a **git submodule** sourced from
 [Project-Zomboid-Template](https://github.com/codyduong/Project-Zomboid-Template), pinned to
-a tag (currently `v0.1.1`), not tracking `main`. `mise.toml` here is a thin per-repo shim
+a tag (currently `v0.2.0`), not tracking `main`. `mise.toml` here is a thin per-repo shim
 over it — a mod-agnostic script library shared across mod repos, factored out so toolchain
 fixes reach every mod that syncs. One-time: install
 [mise](https://mise.jdx.dev) (`winget install jdx.mise`), then:
@@ -71,12 +71,16 @@ mise tasks            # list workflows;  `mise run <task> --help` shows a task's
 | `mise run testhost [--reset]` | Ephemeral local dedicated server for MP testing (state in `.testhost/`) |
 | `mise run publish <test\|prod> "note"` | Upload to Steam Workshop via steamcmd (required test/prod target; run it yourself; Steam Guard) |
 | `mise run sync-template` | Pull the latest `tooling/` (Project-Zomboid-Template) commit; review + commit the bump |
+| `mise run sync-umbrella [version]` | Pin the `Umbrella` type-stub submodule to a PZ build tag (latest available tag if omitted) |
 
-Each task shells out to a PowerShell `tooling/scripts/<name>.ps1`, which you can also run
-directly (`pwsh -File tooling/scripts/<name>.ps1`). The one exception is
-`tooling/scripts/package.sh` — a CI-only twin of `package.ps1` for the Linux release job;
-both live in the shared submodule, so fixes to one reach the other automatically. Task
-arguments are declared with mise's `usage` spec, so `mise run bump --help` documents them.
+Every task is cross-platform: each `tooling/scripts/<name>` has both a `.ps1` and a `.sh`
+twin, and `mise.toml` picks the right one per OS (`run` = the sh command, used on
+Linux/macOS; `run_windows` = the pwsh command, used on Windows — mise's own per-OS task
+mechanism). Both are also runnable directly (`pwsh -File tooling/scripts/<name>.ps1` /
+`bash tooling/scripts/<name>.sh`). `publish` additionally needs **`jq`** on Linux/macOS (to
+read `workshop/item-ids.json`); `decompile`/`testhost` auto-detect the platform's default
+Steam install path (override with `$PZ_HOME` / pass a path, same as Windows). Task arguments
+are declared with mise's `usage` spec, so `mise run bump --help` documents them.
 `emmylua_check`/`luafmt` must be on PATH (that's what `mise install` guarantees).
 
 **Keeping `tooling/` in sync / diverging**: `mise run sync-template` updates the submodule
