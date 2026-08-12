@@ -2,6 +2,7 @@
     "IGUI_PFBarrelFluidsTitle": "PlumbingFixed Barrel Fluids",
     "IGUI_PFBarrelLabel": "Barrel %1 (%2,%3,%4)",
     "IGUI_PFConnectedBarrelsTitle": "Reservoirs",
+    "IGUI_PFReservoirTitle": "Reservoir",
     "IGUI_PFShowMatrixAxis": "Show Fluid Matrix",
     "IGUI_PFShowMatrixAxisTooltip": "Whether or not to display the fluid matrix to the left of the world context menu",
     "IGUI_PFMatrixCellTotal": "Total: %1 / %2 L",

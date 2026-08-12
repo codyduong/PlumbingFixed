@@ -81,6 +81,14 @@ debugScenarios.DebugPlumbing = {
       for i, barrel in ipairs(washerBarrels) do
         barrel:getFluidContainer():addFluid(Fluid.TaintedWater, 7.5 * i)
       end
+
+      -- LG Plumbed Test Rig
+      local lgepExtraBarrels = PFDebugRig.buildMulti(8349, 7176, 0)
+      for i, barrel in ipairs(lgepExtraBarrels) do
+        -- Plain Water rather than Tainted: the extra floor's contribution should be
+        -- visually/numerically distinguishable from the base floor's while both are full.
+        barrel:getFluidContainer():addFluid(Fluid.Water, 10 * i)
+      end
     end)
   end,
 }

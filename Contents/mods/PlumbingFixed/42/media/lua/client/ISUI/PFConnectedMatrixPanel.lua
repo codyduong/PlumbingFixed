@@ -3,6 +3,7 @@ require("ISUI/ISButton")
 require("ISUI/ISWorldObjectContextMenu")
 require("DebugUIs/PFBarrelFluidWindow")
 require("PlumbingFixed/PFUtils")
+require("PlumbingFixed/PFLGEPCompat")
 require("PFModOptions")
 
 -- 3x3 grid of the barrels a plumbed fixture pools from, docked LEFT of the world context
@@ -44,7 +45,9 @@ local function menuHasFluidOption(menu)
     -- their real handler in param1 (addGetUpOption wrapper), Empty in onSelect.
     local callback = option.param1
     if callback == ISWorldObjectContextMenu.onDrink or callback == ISWorldObjectContextMenu.onWashClothing
-      or callback == ISWorldObjectContextMenu.onWashYourself or option.onSelect == ISWorldObjectContextMenu.onFluidEmpty then
+      or callback == ISWorldObjectContextMenu.onWashYourself or option.onSelect == ISWorldObjectContextMenu.onFluidEmpty
+      or callback == ISWorldObjectContextMenu.onToggleClothingWasher
+      or callback == ISWorldObjectContextMenu.onToggleComboWasherDryer then
       return true
     end
   end
@@ -87,6 +90,8 @@ PFMatrixCell = ISButton:derive("PFMatrixCell")
 --- @field watchMenu ISContextMenu the fixture's fluid submenu; the grid shows only while it does
 --- @field watchHadFluidOption boolean whether watchMenu held a fluid option at open (false = root-menu fallback)
 --- @field fixture { x: integer, y: integer, z: integer }
+--- @field ghost IsoObject? an LG Extended Plumbing ghost; when set the panel shows only the
+--- reservoir bar (see PFConnectedMatrixPanel.open)
 --- @field cells PFMatrixCell[]
 --- @field cellGrid PFMatrixCell[][] cells by visual [row][col] (1..3) for gamepad navigation
 --- @field poolBar PFPoolBar
@@ -266,10 +271,16 @@ function PFPoolBar:render()
 end
 
 --- Attach beside `context` for a plumbed fixture; replaces any previous instance.
+--- `ghost`, when given, is an LG Extended Plumbing ghost (see PFLGEPCompat.lua) standing
+--- for a fixture our own scan has deferred to it: the panel then shows only the total
+--- reservoir bar, sized directly off the ghost's real FluidContainer, instead of the 3x3
+--- grid - the grid would show at most one occupied cell (the ghost itself, on the centre
+--- square), which is not what the pool actually looks like once LGEP owns it.
 --- @param playerNum integer
 --- @param context ISContextMenu
 --- @param waterObject IsoObject
-function PFConnectedMatrixPanel.open(playerNum, context, waterObject)
+--- @param ghost IsoObject?
+function PFConnectedMatrixPanel.open(playerNum, context, waterObject, ghost)
   if PFConnectedMatrixPanel.instance then
     PFConnectedMatrixPanel.instance:removeSelf()
   end
@@ -277,26 +288,38 @@ function PFConnectedMatrixPanel.open(playerNum, context, waterObject)
   if sq == nil then
     return
   end
-  local pos = PFModOptions.poolBarPosition:getValue()
-  local width = PAD * 2 + GRID_W
-  local height = PAD * 3 + FONT_HGT_SMALL + GRID_H
-  if pos == POS_LEFT or pos == POS_RIGHT then
-    width = width + BAR_THICK + GAP
-  elseif pos == POS_TOP or pos == POS_BOTTOM then
-    height = height + BAR_THICK + GAP
+
+  local width, height
+  if ghost then
+    width = PAD * 2 + GRID_W
+    height = PAD * 3 + FONT_HGT_SMALL + BAR_THICK
+  else
+    local pos = PFModOptions.poolBarPosition:getValue()
+    width = PAD * 2 + GRID_W
+    height = PAD * 3 + FONT_HGT_SMALL + GRID_H
+    if pos == POS_LEFT or pos == POS_RIGHT then
+      width = width + BAR_THICK + GAP
+    elseif pos == POS_TOP or pos == POS_BOTTOM then
+      height = height + BAR_THICK + GAP
+    end
   end
-  local ui = PFConnectedMatrixPanel:new(0, 0, width, height, playerNum, context, sq)
+
+  local ui = PFConnectedMatrixPanel:new(0, 0, width, height, playerNum, context, sq, ghost)
   ui:setVisible(false)
   ui:initialise()
   ui:addToUIManager()
-  -- Gamepad: DPad-left from the fixture menu steps into the grid (docked on the left).
-  -- Instance-level override on that one menu; removeSelf clears it. Falls through to the
-  -- class behavior while the grid is hidden (submenu back-navigation).
-  ui.watchMenu.onJoypadDirLeft = function(menu)
-    if ui:getIsVisible() then
-      setJoypadFocus(playerNum, ui)
-    else
-      ISContextMenu.onJoypadDirLeft(menu)
+  if not ghost then
+    -- Gamepad: DPad-left from the fixture menu steps into the grid (docked on the left).
+    -- Instance-level override on that one menu; removeSelf clears it. Falls through to the
+    -- class behavior while the grid is hidden (submenu back-navigation). Not wired in
+    -- reservoir-only mode: there is no grid to step into, so the menu's default
+    -- DPad-left behavior is left alone.
+    ui.watchMenu.onJoypadDirLeft = function(menu)
+      if ui:getIsVisible() then
+        setJoypadFocus(playerNum, ui)
+      else
+        ISContextMenu.onJoypadDirLeft(menu)
+      end
     end
   end
   PFConnectedMatrixPanel.instance = ui
@@ -305,7 +328,8 @@ end
 --- @param playerNum integer
 --- @param context ISContextMenu
 --- @param square IsoGridSquare
-function PFConnectedMatrixPanel:new(x, y, width, height, playerNum, context, square)
+--- @param ghost IsoObject? see PFConnectedMatrixPanel.open
+function PFConnectedMatrixPanel:new(x, y, width, height, playerNum, context, square, ghost)
   local o = ISPanel.new(self, x, y, width, height)
   --- @cast o PFConnectedMatrixPanel
   o.backgroundColor = { r = 0, g = 0, b = 0, a = 0.8 }
@@ -316,6 +340,7 @@ function PFConnectedMatrixPanel:new(x, y, width, height, playerNum, context, squ
   o.watchMenu = fixtureMenu or context
   o.watchHadFluidOption = fixtureMenu ~= nil
   o.fixture = { x = square:getX(), y = square:getY(), z = square:getZ() }
+  o.ghost = ghost
   o.cells = {}
   o.cellGrid = { {}, {}, {} }
   o.maxCapacity = 0
@@ -328,9 +353,18 @@ end
 
 function PFConnectedMatrixPanel:createChildren()
   ISPanel.createChildren(self)
+  local top = PAD * 2 + FONT_HGT_SMALL
+
+  if self.ghost then
+    -- Reservoir-only: one bar spanning the grid's width, no cells.
+    self.poolBar = PFPoolBar:new(PAD, top, GRID_W, BAR_THICK)
+    self.poolBar:initialise()
+    self:addChild(self.poolBar)
+    return
+  end
+
   local xPrimary = not PFModOptions.matrixAxisXPrimary:getValue()
   local pos = PFModOptions.poolBarPosition:getValue()
-  local top = PAD * 2 + FONT_HGT_SMALL
   local gridX = pos == POS_LEFT and (PAD + BAR_THICK + GAP) or PAD
   local gridTop = pos == POS_TOP and (top + BAR_THICK + GAP) or top
 
@@ -451,6 +485,12 @@ function PFConnectedMatrixPanel:update()
 end
 
 function PFConnectedMatrixPanel:prerender()
+  if self.ghost then
+    self:updatePoolBarFromGhost()
+    ISPanel.prerender(self)
+    return
+  end
+
   -- Re-resolve sources every frame: server edits retransmit the barrel, which replaces
   -- the object (and its container) under us.
   local selected = self:selectedCell()
@@ -479,32 +519,31 @@ function PFConnectedMatrixPanel:prerender()
   ISPanel.prerender(self)
 end
 
---- Aggregate the pool for the total bar: per-fluid segments in registry order (reserve
---- sources count as Water), plus the tooltip lines (grouped by translated name, same
---- aliasing rationale as cellTooltipText).
-function PFConnectedMatrixPanel:updatePoolBar()
+--- Per-fluid segments (registry order) plus tooltip lines (grouped by translated name, same
+--- aliasing rationale as cellTooltipText) across a set of FluidContainers, with an optional
+--- reserve-water amount folded into the Water segment. Shared by updatePoolBar (our own 3x3)
+--- and updatePoolBarFromGhost (LG Extended Plumbing's single ghost container) so both modes
+--- format identically without duplicating the fluid-iteration logic.
+--- @param containers(FluidContainer?)[]
+--- @param reserveWater number
+--- @return { color: Color, amount: number } [] segments
+--- @return number total
+--- @return string[] lines
+local function aggregateFluidSegments(containers, reserveWater)
   local segments = {}
   local byName = {}
   local order = {}
   local total = 0.0
-  local capacity = 0.0
-  local reserveWater = 0.0
-  for _, cell in ipairs(self.cells) do
-    capacity = capacity + cell.capacity
-    if cell.source and cell.source:getFluidContainer() == nil then
-      reserveWater = reserveWater + cell.source:getFluidAmount()
-    end
-  end
 
   local allFluids = Fluid.getAllFluids()
   for i = 0, allFluids:size() - 1 do
     local fluid = allFluids:get(i)
     local amount = 0.0
-    for _, cell in ipairs(self.cells) do
-      local container = cell.source and cell.source:getFluidContainer()
-      if container then
-        amount = amount + container:getSpecificFluidAmount(fluid)
-      end
+    -- ipairs stops at the first nil, so a container this yields is never nil - callers
+    -- build `containers` densely (updatePoolBar) or pass a single-element table that
+    -- collapses to zero iterations when empty (updatePoolBarFromGhost).
+    for _, container in ipairs(containers) do
+      amount = amount + container:getSpecificFluidAmount(fluid)
     end
     if fluid == Fluid.Water then
       amount = amount + reserveWater
@@ -525,6 +564,41 @@ function PFConnectedMatrixPanel:updatePoolBar()
   for _, name in ipairs(order) do
     table.insert(lines, string.format("%s: %.2f L", name, byName[name]))
   end
+  return segments, total, lines
+end
+
+--- Aggregate the pool for the total bar, from our own 3x3 of cells.
+function PFConnectedMatrixPanel:updatePoolBar()
+  local containers = {}
+  local capacity = 0.0
+  local reserveWater = 0.0
+  for _, cell in ipairs(self.cells) do
+    capacity = capacity + cell.capacity
+    if cell.source and cell.source:getFluidContainer() == nil then
+      reserveWater = reserveWater + cell.source:getFluidAmount()
+    elseif cell.source then
+      table.insert(containers, cell.source:getFluidContainer())
+    end
+  end
+
+  local segments, total, lines = aggregateFluidSegments(containers, reserveWater)
+  table.insert(lines, getText("IGUI_PFMatrixCellTotal", string.format("%.2f", total), string.format("%.2f", capacity)))
+  self.poolBar.segments = segments
+  self.poolBar.capacity = capacity
+  self.poolBar.tooltip = table.concat(lines, "\n")
+end
+
+--- Aggregate the pool for the total bar, straight from an LG Extended Plumbing ghost's own
+--- FluidContainer (see PFLGEPCompat.lua) - it is already the correct building-wide total,
+--- kept live by LGEP itself.
+function PFConnectedMatrixPanel:updatePoolBarFromGhost()
+  if self.ghost == nil then
+    return
+  end
+  local container = self.ghost:getFluidContainer()
+  local capacity = container and container:getCapacity() or 0.0
+
+  local segments, total, lines = aggregateFluidSegments({ container }, 0.0)
   table.insert(lines, getText("IGUI_PFMatrixCellTotal", string.format("%.2f", total), string.format("%.2f", capacity)))
   self.poolBar.segments = segments
   self.poolBar.capacity = capacity
@@ -646,7 +720,8 @@ end
 
 function PFConnectedMatrixPanel:render()
   ISPanel.render(self)
-  self:drawTextCentre(getText("IGUI_PFConnectedBarrelsTitle"), self.width / 2, PAD, 1, 1, 1, 1, UIFont.Small)
+  local title = self.ghost and getText("IGUI_PFConnectedBarrelTitle") or getText("IGUI_PFConnectedBarrelsTitle")
+  self:drawTextCentre(title, self.width / 2, PAD, 1, 1, 1, 1, UIFont.Small)
 end
 
 --- Debug/admin only: open the mod's per-barrel fluid editor (PFBarrelFluidWindow) for
@@ -683,8 +758,16 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
     return
   end
   local waterObject = findWaterObject(worldObjects)
-  if not waterObject or not isMultiSource(getPlumbedSources(waterObject)) then
-    return
+  if waterObject then
+    if isMultiSource(getPlumbedSources(waterObject)) then
+      PFConnectedMatrixPanel.open(player, context, waterObject)
+      return
+    end
+
+    local lgepGhost = findLGEPGhost(waterObject)
+    if lgepGhost then
+      PFConnectedMatrixPanel.open(player, context, waterObject, lgepGhost)
+      return
+    end
   end
-  PFConnectedMatrixPanel.open(player, context, waterObject)
 end)

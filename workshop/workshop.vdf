@@ -37,6 +37,14 @@ A table of known mods as well as what versions they are compatible with. The pur
 		[th]Status[/th]
 	[/tr]
 	[tr]
+		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3779561845]LG Extended Plumbing[/url][/td]
+		[td]3.2.0[/td]
+		[td]
+			Compatible - [u]supported[/u]
+			LG Extended Plumbing pools an entire building's collectors onto an invisible marker above each fixture. When it's installed, PlumbingFixed detects that marker and defers to it entirely instead of pooling its own 3x3, so water is never double-counted between the two mods. The Fluid Matrix window still shows a single reservoir bar with the combined total instead of the 3x3 grid.
+		[/td]
+	[/tr]
+	[tr]
 		[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3403870858]Lifestyle: Hobbies[/url][/td]
 		[td]0.4.0[/td]
 		[td]
@@ -90,10 +98,14 @@ A table of known mods as well as what versions they are compatible with. The pur
 
 Mods will be made compatible on a case-by-case basis - determined by ease for me to do it or as a possible collaboration with the other mod author(s).
 
-[h2]Known Issues[/h2]
-This mod will turn all fluids plumbed into a fixture into regular water. It is not an issue that affects 99% of players. Once B42 turns stable I may reconsider this and figure out a way to mix fluids on output. 
-
-[u][b]No promise on this ever being fixed.[/b][/u]
+[h2]Check Out My Other Mods[/h2]
+[table]
+	[tr]
+		[td]
+			[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3781464051][img]https://raw.githubusercontent.com/codyduong/WaterPurification/fffbdd081429e77462cda347ce671eaf7962d0c9/preview.png[/img][/url]
+		[/td]
+	[/tr]
+[/table]
 
 [h3]Copyright (c) 2026 Cody Duong, and contributors[/h3]
 

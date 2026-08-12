@@ -126,13 +126,15 @@ local function forceGetSquare(x, y, z)
 end
 
 --- @param sq IsoGridSquare
-local function createWallW(sq)
-  placeSpecialObject(sq, CreateObject(sq, "carpentry_02_100", "W"))
+--- @param sprite string?
+local function createWallW(sq, sprite)
+  placeSpecialObject(sq, CreateObject(sq, sprite or "carpentry_02_100", "W"))
 end
 
 --- @param sq IsoGridSquare
-local function createWallN(sq)
-  placeSpecialObject(sq, CreateObject(sq, "carpentry_02_101", "N"))
+--- @param sprite string?
+local function createWallN(sq, sprite)
+  placeSpecialObject(sq, CreateObject(sq, sprite or "carpentry_02_101", "N"))
 end
 
 --- @param x integer
@@ -144,6 +146,38 @@ local function createBarrelOnSq(x, y, z, sprite)
   local barrel = CreateBarrel(sq, sprite, 500)
   placeSpecialObject(sq, barrel)
   return barrel
+end
+
+--- A flight of stairs from z up to z+1, at the rig's own stair run (x, y+5).
+--- @param x integer rig origin x
+--- @param y integer rig origin y
+--- @param z integer the floor the stairs start from
+local function createStairsAt(x, y, z)
+  local stairs = ISWoodenStairs:new(
+    "carpentry_02_88",
+    "carpentry_02_89",
+    "carpentry_02_90",
+    "carpentry_02_96",
+    "carpentry_02_97",
+    "carpentry_02_98",
+    "carpentry_02_94",
+    "carpentry_02_95"
+  )
+  stairs:create(x, y + 5, z, true, "carpentry_02_96")
+end
+
+--- @param x integer
+--- @param y integer rig origin y
+--- @param z integer
+--- @param xDelt integer
+--- @param yDelt integer
+local function floorRows(x, y, z, xDelt, yDelt)
+  for i = 0, xDelt - 1 do
+    for j = 0, yDelt - 1 do
+      local sq = forceGetSquare(x + i, y + j, z)
+      sq:addFloor("carpentry_02_56")
+    end
+  end
 end
 
 --- @param x integer
@@ -313,17 +347,68 @@ function PFDebugRig.build(x, y, z, plumbed, fixture)
     createSinkOnSq(x + 1, y + 1, z, plumbed)
   end
 
-  local stairs = ISWoodenStairs:new(
-    "carpentry_02_88",
-    "carpentry_02_89",
-    "carpentry_02_90",
-    "carpentry_02_96",
-    "carpentry_02_97",
-    "carpentry_02_98",
-    "carpentry_02_94",
-    "carpentry_02_95"
-  )
-  stairs:create(x, y + 5, z, true, "carpentry_02_96")
+  createStairsAt(x, y, z)
+
+  return barrels
+end
+
+--- @param x integer rig origin x (same origin passed to PFDebugRig.build)
+--- @param y integer rig origin y
+--- @param z integer rig origin z (the rig's OWN z, not the barrel floor)
+--- @return IsoThumpable[] barrels the 4 barrels on the extra floor
+function PFDebugRig.buildMulti(x, y, z)
+  PFDebugRig.clear(x, y, z)
+  threeByThree(x, y, z, true)
+  threeByThree(x, y, z + 1, true)
+  threeByThree(x, y, z + 2, false)
+
+  local barrels = {}
+  table.insert(barrels, createBarrelOnSq(x, y, z + 2, "carpentry_02_122"))
+  table.insert(barrels, createBarrelOnSq(x, y + 1, z + 2, "carpentry_02_124"))
+  table.insert(barrels, createBarrelOnSq(x + 2, y, z + 2, "carpentry_02_54"))
+  table.insert(barrels, createBarrelOnSq(x + 2, y + 1, z + 2, "carpentry_02_120"))
+
+  createStairsAt(x, y, z)
+  createStairsAt(x, y, z + 1)
+  createSinkOnSq(x + 1, y + 1, z, true)
+  floorRows(x, y + 3, z, 3, 4)
+  floorRows(x + 1, y + 3, z + 1, 2, 4)
+  floorRows(x, y + 6, z + 1, 1, 1)
+  floorRows(x + 1, y + 3, z + 2, 2, 4)
+
+  -- Floor 0
+  for i = 0, 2 do
+    sq = forceGetSquare(x + i, y + 7, 0)
+    createWallN(sq)
+  end
+  for i = 0, 3 do
+    sq = forceGetSquare(x, y + 3 + i, 0)
+    createWallW(sq)
+    sq = forceGetSquare(x + 3, y + 3 + i, 0)
+    createWallW(sq)
+  end
+  -- Add door
+  sq = forceGetSquare(x + 1, y + 3, 0)
+  sq:transmitRemoveItemFromSquare(sq:getObjectWithSprite("carpentry_02_101"))
+  createWallN(sq, "walls_exterior_wooden_01_35")
+  -- Floor 1
+  for i = 0, 2 do
+    sq = forceGetSquare(x + i, y + 7, 1)
+    createWallN(sq)
+    sq = forceGetSquare(x + i, y + 3, 1)
+    sq:transmitRemoveItemFromSquare(sq:getObjectWithSprite("carpentry_02_101"))
+  end
+  for i = 0, 3 do
+    sq = forceGetSquare(x + 0, y + 3 + i, 1)
+    createWallW(sq)
+    sq = forceGetSquare(x + 1, y + 3 + i, 1)
+    createWallW(sq)
+    sq = forceGetSquare(x + 3, y + 3 + i, 1)
+    createWallW(sq)
+  end
+  sq = forceGetSquare(x + 1, y + 6, 1)
+  sq:transmitRemoveItemFromSquare(sq:getObjectWithSprite("carpentry_02_100"))
+  createWallW(sq, "walls_exterior_wooden_01_34")
 
   return barrels
 end

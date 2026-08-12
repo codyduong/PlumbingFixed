@@ -1,3 +1,5 @@
+require("PlumbingFixed/PFLGEPCompat")
+
 --- Patch based on PFPooledPrimitives
 --- @class IsoObject
 --- @field __PFraw PFRawBound
@@ -12,6 +14,9 @@ function getPlumbedSources(waterObject, predicate)
   end
   local sq = waterObject:getSquare()
   if not sq then
+    return sources
+  end
+  if isDeferredToLGEP(waterObject) then
     return sources
   end
 
@@ -317,6 +322,10 @@ function findWaterObject(worldObjects)
       if object ~= nil and isPlumbed(object) then
         local plumbed = getPlumbedSources(object)
         if #plumbed > 0 then
+          return object
+        end
+        -- LG Extending Plumbing Compat
+        if isDeferredToLGEP(object) then
           return object
         end
       end
